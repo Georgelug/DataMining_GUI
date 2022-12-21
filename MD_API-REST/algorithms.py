@@ -9,7 +9,14 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn import model_selection
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score 
+from sklearn.cluster import KMeans
+from sklearn.metrics import pairwise_distances_argmin_min
+from kneed import KneeLocator
 
 class Data:
     def __init__(self,ticker,name,date_start = '2019-1-1',date_end = '2022-1-1',interval = '1d'):
@@ -59,7 +66,7 @@ class Data:
             "history": self.getHistory().to_json(orient = 'records')
         }
 
-class EDA:
+class EDA_algorithm:
     def __init__(self , data):
         self.data = data
     
@@ -89,6 +96,7 @@ class EDA:
         self.data.setHistory(self.data.getHistory().dropna())
     
     # Step 3: Identifying atypical values
+    # this function could be deleted, if it's possible to render a dinamic histograms in frontend side
     def create_histograms(self):
         try:
             self.data.getHistory().hist(figsize=(14,14), xrot=45)
@@ -103,9 +111,11 @@ class EDA:
                 "message":"Error: The histograms couldn't been saved into the server",
                 "status" : False
             }
+    
     def data_statistics(self):
         return self.data.getHistory().describe()
     
+    # this function could be deleted, if it's possible to render a dinamic main plots in frontend side
     def create_DataTickerGraphic(self):
         try:
             plt.figure(figsize=(20, 5))
@@ -119,12 +129,12 @@ class EDA:
             plt.savefig(f'images/{self.data.getName()}_mainGrafic.png')
             plt.show()
             return {
-                "message":"The grafic has been saved into the server succesfully",
+                "message":"The plot has been saved into the server succesfully",
                 "status" : True
             }
         except Exception as e:
             return {
-                "message":"Error: The grafic couldn't been saved into the server",
+                "message":"Error: The plot couldn't been saved into the server",
                 "status" : False
             }
             
@@ -132,6 +142,7 @@ class EDA:
     def getCorrelations(self):
         return self.data.getHistory().corr()
     
+    # this function could be deleted, if it's possible to render a dinamics heatmaps in frontend side
     def getHeatMap(self):
         dataCorr = self.getCorrelations()
         try:
@@ -150,10 +161,10 @@ class EDA:
                 "status" : False
             }
 
-class PCA:
+class PCA_algorithm:
     def __init__(self , data):
         self.data = data
-        self.eda = EDA(data)
+        self.eda = EDA_algorithm(data)
         self.HistStandart = {}
         self.pca_matrix = {}
         self.MStandard = {}
@@ -164,6 +175,7 @@ class PCA:
     def getCorrelations(self):
         return self.eda.getCorrelations()
     
+    # this function could be deleted, if it's possible to render a dinamic heatmps in frontend side
     def getHeatMap(self):
         return self.eda.getHeatMap()
             
@@ -177,17 +189,20 @@ class PCA:
     # step 3 y 4: The covariance or correlation matrix is calculated, and the components (eigen-vectors) and the variance (eigen-values) are calculated.
     def covariance_matrix(self):
         self.pca_matrix = PCA(n_components=10)
-        self.pca.fit(self.MStandard)
-        return self.pca.components_
+        self.pca_matrix.fit(self.MStandard)
+        return self.pca_matrix.components_
     # step 5: The number of principal components is decided
     def setNumberOfPrincipalComponents(self):
-        Varianza = self.pca.explained_variance_ratio_
+        Varianza = self.pca_matrix.explained_variance_ratio_
         for i in range(len(Varianza)):
             s = sum(Varianza[0:i+1])
             if s > 0.75 and s < 0.90:
                 self.numberOfPrincipalComponents = i+1
+                
+    def getNumberOfPrincipalComponents(self):
         return self.numberOfPrincipalComponents
     
+    # this function could be deleted, if it's possible to render a dinamic heatmps in frontend side
     def cumulativeVariance_components(self):
         try:
             plt.plot(np.cumsum(self.pca.explained_variance_ratio_))
@@ -224,7 +239,7 @@ class PCA:
 class randomForestModel:
     def __init__(self , data):
         self.data = data
-        self.eda = EDA(data)
+        self.eda = EDA_algorithm(data)
         self.Mdata = data.getHistory().drop(columns = ['Volume', 'Dividends', 'Stock Splits'])
         self.Mdata = self.Mdata.dropna()
         self.X = np.array(self.MData[['Open',
@@ -247,7 +262,7 @@ class randomForestModel:
                                                                                                 )
     
     def trainModel(self):
-        self.model = RandomForestRegressor(random_state=0)
+        self.model = RandomForestRegressor(n_estimators=100, max_depth=8, min_samples_split=4, min_samples_leaf=2, random_state=0)
         self.model.fit(self.X_train, self.Y_train)
         self.Y_Pronostic = self.model.predict(self.X_test)
     
@@ -260,7 +275,8 @@ class randomForestModel:
             "rmse": mean_squared_error(self.Y_test, self.Y_Pronostic,squared=False),
             "score": r2_score(self.Y_test, self.Y_Pronostic)
         }
-    
+        
+    # this function could be deleted, if it's possible to render a dinamic plot in frontend side
     def plotModel(self):
         try:
             plt.figure(figsize=(20, 5))
@@ -283,7 +299,36 @@ class randomForestModel:
                 "status" : False
             }
     
+    # this function receives a df with columns 'Open': [] , 'High': [], 'Low' : []
     def newPronostic(self,stockMarketSharePrice):
         return self.model.predict(stockMarketSharePrice)
     
+
+class DtreeModel(randomForestModel):
+    def __init__(self , data):
+        super().__init__(self, data)
     
+    def trainModel(self):
+        self.model = DecisionTreeRegressor(max_depth=10, min_samples_split=4, min_samples_leaf=2, random_state=0)
+        self.model.fit(self.X_train, self.Y_train)
+        self.Y_Pronostic = self.model.predict(self.X_test)
+
+
+class kmeans():
+    def __init__(self,data):
+        self.data = data
+        self.eda = EDA_algorithm(data)
+        self.Mdata = data.getHistory().drop(columns = ['Open', 'High','Low', 'Stock Splits'])
+        self.SMdata = StandardScaler().fit_transform(self.Mdata)
+        self.MParticional = KMeans(n_clusters=4, random_state=0).fit(self.SMdata)
+        
+    def __createLabels(self):
+        self.MParticional.predict(self.SMdata)
+        self.Mdata['cluster'] = self.MParticional.labels_
+    
+    def clusterize(self):
+        self.__createLabels()
+        return self.Mdata
+
+
+

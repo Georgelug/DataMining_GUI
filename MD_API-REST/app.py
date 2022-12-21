@@ -3,7 +3,7 @@ import pandas as pd
 import json
 
 
-from algorithms import Data, EDA
+from algorithms import Data, EDA_algorithm
 app = Flask(__name__) # our app
 
 
@@ -32,7 +32,7 @@ def ping():
 @app.route("/EDA")
 def eda():
     if data.data:
-        eda = EDA(data)
+        eda = EDA_algorithm(data)
         step1 = eda.getDescriptionOfData()
         step2 = eda.getMissingData()
         step3 = {
