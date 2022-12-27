@@ -56,7 +56,38 @@ def eda():
     return jsonify({
         "message" : "Error, there is no data"
     })
+
+@app.route("/PCA")
+def PCA():
+    return jsonify({
+        "message":"PCA algorithm"
+    })
     
+@app.route("/Model/Dtree")
+def Dtree():
+    return jsonify({
+        "message":"Decision tree regressor model"
+    })
+@app.route("/Model/randomForest")
+def randomForest():
+    return jsonify({
+        "message":"Random Forest Regressor model"
+    })
+
+@app.route("/Model/hybrid")
+def hybrid():
+    return jsonify({
+        "message":"hybrid model (Kmeans + random forest)"
+    })
+    
+@app.route("/Model/SVM/<string:kernel>")
+def svm(kernel):
+    return jsonify({
+        "message":f"Support vector machine model with kernel = {kernel}"
+    })
+
+
+
 
 
 if __name__ == "__main__":

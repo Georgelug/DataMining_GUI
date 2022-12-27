@@ -333,7 +333,7 @@ class randomForestModel_Classifier(randomForestModel):
         self.X = X
         self.Y = Y
 
-class kmeans():
+class Hybrid_kmeansRandomForest():
     def __init__(self,data):
         self.data = data
         self.eda = EDA_algorithm(data)
