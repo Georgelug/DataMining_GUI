@@ -16,6 +16,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score 
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin_min
+from sklearn.svm import SVC
 from kneed import KneeLocator
 
 class Data:
@@ -236,7 +237,7 @@ class PCA_algorithm:
         
         return self.getComponentLoads()
 
-class randomForestModel:
+class Model:
     def __init__(self , data):
         self.data = data
         self.eda = EDA_algorithm(data)
@@ -261,8 +262,8 @@ class randomForestModel:
                                                                                                 shuffle = True
                                                                                                 )
     
-    def trainModel(self):
-        self.model = RandomForestRegressor(n_estimators=100, max_depth=8, min_samples_split=4, min_samples_leaf=2, random_state=0)
+    def trainModel(self,model):
+        self.model = model
         self.model.fit(self.X_train, self.Y_train)
         self.Y_Pronostic = self.model.predict(self.X_test)
     
@@ -299,12 +300,25 @@ class randomForestModel:
                 "status" : False
             }
     
+    def buildModel(self):
+        self.set_trainTest()
+        self.trainModel()
+    
     # this function receives a df with columns 'Open': [] , 'High': [], 'Low' : []
     def newPronostic(self,stockMarketSharePrice):
         return self.model.predict(stockMarketSharePrice)
-    
 
-class DtreeModel(randomForestModel):
+class randomForestModel(Model):
+    def __init__(self , data):
+        super().__init__(self, data)
+        
+    def trainModel(self):
+        self.model = RandomForestRegressor(n_estimators=100, max_depth=8, min_samples_split=4, min_samples_leaf=2, random_state=0)
+        self.model.fit(self.X_train, self.Y_train)
+        self.Y_Pronostic = self.model.predict(self.X_test)
+        
+
+class DtreeModel(Model):
     def __init__(self , data):
         super().__init__(self, data)
     
@@ -312,7 +326,12 @@ class DtreeModel(randomForestModel):
         self.model = DecisionTreeRegressor(max_depth=10, min_samples_split=4, min_samples_leaf=2, random_state=0)
         self.model.fit(self.X_train, self.Y_train)
         self.Y_Pronostic = self.model.predict(self.X_test)
-
+        
+class randomForestModel_Classifier(randomForestModel):
+    def __init__(self , data, X, Y):
+        super().__init__(self, data)
+        self.X = X
+        self.Y = Y
 
 class kmeans():
     def __init__(self,data):
@@ -320,8 +339,11 @@ class kmeans():
         self.eda = EDA_algorithm(data)
         self.Mdata = data.getHistory().drop(columns = ['Open', 'High','Low', 'Stock Splits'])
         self.SMdata = StandardScaler().fit_transform(self.Mdata)
-        self.MParticional = KMeans(n_clusters=4, random_state=0).fit(self.SMdata)
-        
+        self.knee = KneeLocator(range(2, 10), [KMeans(n_clusters=i, random_state=0).fit(self.SMdata).inertia_ for i in range(2, 10)], curve="convex", direction="decreasing")
+        self.MParticional = KMeans(n_clusters= self.knee.elbow, random_state=0).fit(self.SMdata)
+        self.randomForest = None
+        self.X = []
+        self.Y = []
     def __createLabels(self):
         self.MParticional.predict(self.SMdata)
         self.Mdata['cluster'] = self.MParticional.labels_
@@ -330,5 +352,30 @@ class kmeans():
         self.__createLabels()
         return self.Mdata
 
+    def classify(self):
+        try:
+            CMdata = self.clusterize()
+            self.X = np.array(CMdata.drop(columns = ['cluster']))
+            self.Y = np.array(CMdata['cluster'])
+            self.randomForest = randomForestModel_Classifier(self.data, self.X, self.Y)
+            self.randomForest.buildModel()
+            return True
+        except Exception as e:
+            return False
+    
+    def newClassification(self,stockMarketSharePrice):
+        if self.classify():
+            return self.randomForest.newPronostic(stockMarketSharePrice)
+        else:
+            return None
+        
 
-
+class SVM(Model):
+    def __init__(self,data):
+        super().__init__(self,data)
+        self.kernel = ''
+    def trainModel(self,kernel = 'linear'):
+        self.kernel = kernel
+        self.model = SVC(kernel = self.kernel)
+        self.model.fit(self.X_train, self.Y_train)
+        self.Y_Pronostic = self.model.predict(self.X_test)
