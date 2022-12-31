@@ -161,20 +161,53 @@ class EDA_algorithm:
                 "message":"Error: The heatmap couldn't been saved into the server",
                 "status" : False
             }
+    def runProcess(self):
+        try:
+            step1 = self.getDescriptionOfData()
+            step2 = self.getMissingData()
+            step3 = {
+                    "histograms_status": self.create_histograms(),
+                    "data_statistics" : self.data_statistics().to_dict(),
+                    "graphic_status" : self.create_DataTickerGraphic()
+                }
+            step4 = {
+                    "correlations": self.getCorrelations().to_dict(),
+                    "heatmap_status": self.getHeatMap()  
+                }
+            date = datetime.now()
+            return {
+                "message":"The process was successful",
+                "status": True,
+                "time_stamp": date,
+                "process":{
+                    "step1": step1,
+                    "step2": step2,
+                    "step3": step3,
+                    "step4": step4
+                }
+            }
+        except Exception as e:
+            return {
+                "message":f"something is wrong, Error: {e}",
+                "status": False,
+                "time_stamp": date
+            }
+
 
 class PCA_algorithm:
-    def __init__(self , data):
+    def __init__(self , data, eda):
         self.data = data
-        self.eda = EDA_algorithm(data)
-        self.HistStandart = {}
-        self.pca_matrix = {}
-        self.MStandard = {}
+        self.eda = eda
+        self.MStandard = StandardScaler().fit_transform(self.data.getHistory())
+        self.pca_matrix = PCA(n_components=None)
+        self.pca_matrix.fit(self.MStandard) 
         self.numberOfPrincipalComponents = 0
-        self.componentLoads = pd.DataFrame(abs(self.pca.components_), columns=self.data.getHistory().columns)
+        self.HistStandart = pd.DataFrame(self.MStandard, columns=self.data.getHistory().columns)
+        self.componentLoads = pd.DataFrame(abs(self.pca_matrix.components_), columns=self.data.getHistory().columns)
         
     # step 1: Identify possible correlated variables
     def getCorrelations(self):
-        return self.eda.getCorrelations()
+        return self.eda.getCorrelations().to_dict()
     
     # this function could be deleted, if it's possible to render a dinamic heatmps in frontend side
     def getHeatMap(self):
@@ -182,17 +215,16 @@ class PCA_algorithm:
             
     # step 2: Data standardization
     def standardize(self):
-        standardization = StandardScaler()
-        self.MStandard = standardization.fit_transform(self.data.getHistory())
-        self.HistStandart = pd.DataFrame(self.MStandard, columns = self.data.getHistory())
-        return self.HistStandart
+        return self.HistStandart.to_dict()
     
     # step 3 y 4: The covariance or correlation matrix is calculated, and the components (eigen-vectors) and the variance (eigen-values) are calculated.
     def covariance_matrix(self):
-        self.pca_matrix = PCA(n_components=10)
-        self.pca_matrix.fit(self.MStandard)
         return self.pca_matrix.components_
     # step 5: The number of principal components is decided
+                
+    def getNumberOfPrincipalComponents(self):
+        return self.numberOfPrincipalComponents
+    
     def setNumberOfPrincipalComponents(self):
         Varianza = self.pca_matrix.explained_variance_ratio_
         for i in range(len(Varianza)):
@@ -200,13 +232,11 @@ class PCA_algorithm:
             if s > 0.75 and s < 0.90:
                 self.numberOfPrincipalComponents = i+1
                 
-    def getNumberOfPrincipalComponents(self):
-        return self.numberOfPrincipalComponents
-    
+        return self.getNumberOfPrincipalComponents()
     # this function could be deleted, if it's possible to render a dinamic heatmps in frontend side
     def cumulativeVariance_components(self):
         try:
-            plt.plot(np.cumsum(self.pca.explained_variance_ratio_))
+            plt.plot(np.cumsum(self.pca_matrix.explained_variance_ratio_))
             plt.xlabel('Número de componentes')
             plt.ylabel('Varianza acumulada')
             plt.grid()
@@ -236,11 +266,40 @@ class PCA_algorithm:
         self.componentLoads = newComponentLoads
         
         return self.getComponentLoads()
-
+    
+    # Check this function, we need to convert the dataframes to dictionaries
+    def runProcess(self):
+        try:
+            step1 = self.getCorrelations()
+            step2 = self.standardize()
+            step3_4 = self.covariance_matrix()
+            step5 = self.setNumberOfPrincipalComponents()
+            step6 = self.dropLessSignificantColumns()
+            date = datetime.now()
+            return {
+                "message":"The process was successful",
+                "status": True,
+                "time_stamp": date,
+                "process":{
+                    "step1": step1,
+                    "step2": step2,
+                    "step3_4": step3_4,
+                    "step5": step5,
+                    "step6": step6
+                }
+            }
+        except Exception as e:
+            date = datetime.now()
+            return {
+                "message":f"something is wrong, Error: {e}",
+                "status": False,
+                "time_stamp": date
+            }
+            
 class Model:
-    def __init__(self , data):
+    def __init__(self , data ,eda):
         self.data = data
-        self.eda = EDA_algorithm(data)
+        self.eda = eda
         self.Mdata = data.getHistory().drop(columns = ['Volume', 'Dividends', 'Stock Splits'])
         self.Mdata = self.Mdata.dropna()
         self.X = np.array(self.MData[['Open',
@@ -301,16 +360,55 @@ class Model:
             }
     
     def buildModel(self):
-        self.set_trainTest()
-        self.trainModel()
-    
+        try:
+            self.set_trainTest()
+            self.trainModel()
+            date = datetime.now()
+            return {"message":"The model has been created succesfully",
+                    "status": True,
+                    "time_stamp": date,
+                    "model_info": self.infoModel()
+                    }
+        except Exception as e:
+            date = datetime.now()
+            return {"message":f"Error, Something is wrong {e}",
+                    "status": False,
+                    "time_stamp": date 
+                    }
+        
     # this function receives a df with columns 'Open': [] , 'High': [], 'Low' : []
     def newPronostic(self,stockMarketSharePrice):
-        return self.model.predict(stockMarketSharePrice)
+        try:
+            newPron = self.model.predict(stockMarketSharePrice)[0]
+            date = datetime.now()
+            return {
+                    "message":"The pronostic has been created succesfully",
+                    "status": True,
+                    "time_stamp": date,
+                    "input":{
+                        "Open" : stockMarketSharePrice["Open"], 
+                        "High" : stockMarketSharePrice["High"], 
+                        "Low" : stockMarketSharePrice["Low"]
+                        },
+                    "output":{
+                        "close": newPron
+                    }
+                }
+        except Exception as e:
+            date = datetime.now()
+            return {
+                    "message":f"something is wrong, Error: {e}",
+                    "status": False,
+                    "time_stamp": date,
+                    "input":stockMarketSharePrice,
+                    "output":{
+                        "close": None
+                    }
+                }
 
 class randomForestModel(Model):
-    def __init__(self , data):
-        super().__init__(self, data)
+    def __init__(self , data, eda):
+        super().__init__(self, data, eda)
         
     def trainModel(self):
         self.model = RandomForestRegressor(n_estimators=100, max_depth=8, min_samples_split=4, min_samples_leaf=2, random_state=0)
@@ -319,8 +417,8 @@ class randomForestModel(Model):
         
 
 class DtreeModel(Model):
-    def __init__(self , data):
-        super().__init__(self, data)
+    def __init__(self , data, eda):
+        super().__init__(self, data, eda)
     
     def trainModel(self):
         self.model = DecisionTreeRegressor(max_depth=10, min_samples_split=4, min_samples_leaf=2, random_state=0)
@@ -328,8 +426,8 @@ class DtreeModel(Model):
         self.Y_Pronostic = self.model.predict(self.X_test)
         
 class randomForestModel_Classifier(randomForestModel):
-    def __init__(self , data, X, Y):
-        super().__init__(self, data)
+    def __init__(self , data,eda, X, Y):
+        super().__init__(self,data,eda)
         self.X = X
         self.Y = Y
 
@@ -337,7 +435,7 @@ class Hybrid_kmeansRandomForest():
     def __init__(self,data):
         self.data = data
         self.eda = EDA_algorithm(data)
-        self.Mdata = data.getHistory().drop(columns = ['Open', 'High','Low', 'Stock Splits'])
+        self.Mdata = data.getHistory().drop(columns = ['Open', 'High','Low', 'Stock Splits']) # we select Close, Volume and Dividends
         self.SMdata = StandardScaler().fit_transform(self.Mdata)
         self.knee = KneeLocator(range(2, 10), [KMeans(n_clusters=i, random_state=0).fit(self.SMdata).inertia_ for i in range(2, 10)], curve="convex", direction="decreasing")
         self.MParticional = KMeans(n_clusters= self.knee.elbow, random_state=0).fit(self.SMdata)
@@ -363,19 +461,44 @@ class Hybrid_kmeansRandomForest():
         except Exception as e:
             return False
     
+    # this function receives a df with columns 'Close': [] , 'Volume': [], 'Dividends' : [] 
     def newClassification(self,stockMarketSharePrice):
-        if self.classify():
-            return self.randomForest.newPronostic(stockMarketSharePrice)
-        else:
-            return None
-        
+        try:
+            if not self.classify():
+                raise Exception()
+            newPron = self.randomForest.newPronostic(stockMarketSharePrice)[0]
+            date = datetime.now()
+            return {
+                    "message":"The classification has been created succesfully",
+                    "status": True,
+                    "time_stamp": date,
+                    "input":{
+                        "Close" : stockMarketSharePrice["Close"], 
+                        "Volume" : stockMarketSharePrice["Volume"], 
+                        "Dividends" : stockMarketSharePrice["Dividends"]
+                        },
+                    "output":{
+                        "cluster": newPron
+                    }
+                }
+        except Exception as e:
+            date = datetime.now()
+            return {
+                    "message":f"something is wrong, Error: {e}",
+                    "status": False,
+                    "time_stamp": date,
+                    "input":stockMarketSharePrice,
+                    "output":{
+                        "cluster": None
+                    }
+                }
+    
 
 class SVM(Model):
-    def __init__(self,data):
-        super().__init__(self,data)
-        self.kernel = ''
-    def trainModel(self,kernel = 'linear'):
+    def __init__(self,data,eda,kernel):
+        super().__init__(self,data, eda)
         self.kernel = kernel
+    def trainModel(self):
         self.model = SVC(kernel = self.kernel)
         self.model.fit(self.X_train, self.Y_train)
         self.Y_Pronostic = self.model.predict(self.X_test)
