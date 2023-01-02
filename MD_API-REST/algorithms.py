@@ -21,43 +21,43 @@ from kneed import KneeLocator
 
 class Data:
     def __init__(self,ticker,name,date_start = '2019-1-1',date_end = '2022-1-1',interval = '1d'):
-        self.ticker = ticker
-        self.name = name
-        self.date_start = date_start
-        self.date_end = date_end
-        self.interval = interval
+        self.ticker : str = ticker
+        self.name : str = name
+        self.date_start : str = date_start
+        self.date_end : str = date_end
+        self.interval : str = interval
         try:
-            self.data = yf.Ticker(ticker)
-            self.Hist = self.data.history(start = self.date_start, end = self.date_end, interval=interval)
+            self.data : yf.Ticker = yf.Ticker(ticker)
+            self.Hist : np = self.data.history(start = self.date_start, end = self.date_end, interval=interval)
         except Exception as e:
             print(e)
             self.data = None
     # setters and getters
     def setHistory(self,hist):
         self.Hist = hist
-    def getTicker(self):
+    def getTicker(self) -> str:
         return self.ticker
     
-    def getName(self):
+    def getName(self)-> str:
         return self.name
     
-    def getInterval(self):
+    def getInterval(self)-> str:
         return self.interval
     
-    def getData(self):
+    def getData(self) -> yf.Ticker:
         return self.data
     
-    def getHistory(self):
+    def getHistory(self) -> np:
         return self.Hist
     
-    def getDateRange(self):
+    def getDateRange(self) -> dict:
         return {
                 "start" : self.date_start, 
                 "end" : self.date_end, 
                 "date_diference" : str(datetime.strptime(self.date_end, '%Y-%m-%d') - datetime.strptime(self.date_start, '%Y-%m-%d'))
                 }
         
-    def getDataInformation(self):
+    def getDataInformation(self) -> dict:
         return {
             "ticker": self.getTicker(),
             "name": self.getName(),
@@ -69,10 +69,10 @@ class Data:
 
 class EDA_algorithm:
     def __init__(self , data):
-        self.data = data
+        self.data : Data = data
     
     # Step 1: Description of the data structure
-    def getDescriptionOfData(self):
+    def getDescriptionOfData(self) -> dict:
         shape = self.data.getHistory().shape
         dTypes = self.data.getHistory().dtypes.to_dict()
         dTypes_dict = {i : str(dTypes[i]) for i in dTypes}
@@ -87,7 +87,7 @@ class EDA_algorithm:
             }
     
     # Step 2: Identifying missing data
-    def getMissingData(self):
+    def getMissingData(self) -> dict:
         dataNulls = self.data.getHistory().isnull().sum().to_dict()
         return {
                 "columnsNull":[i for i in dataNulls if dataNulls[i] != 0]
@@ -98,7 +98,7 @@ class EDA_algorithm:
     
     # Step 3: Identifying atypical values
     # this function could be deleted, if it's possible to render a dinamic histograms in frontend side
-    def create_histograms(self):
+    def create_histograms(self) -> dict:
         try:
             self.data.getHistory().hist(figsize=(14,14), xrot=45)
             plt.savefig(f'images/{self.data.getName()}_histograms.png')
@@ -117,7 +117,7 @@ class EDA_algorithm:
         return self.data.getHistory().describe()
     
     # this function could be deleted, if it's possible to render a dinamic main plots in frontend side
-    def create_DataTickerGraphic(self):
+    def create_DataTickerGraphic(self) -> dict:
         try:
             plt.figure(figsize=(20, 5))
             plt.plot(self.data.getHistory()['Open'], color='red', marker='+', label='Open')
@@ -140,11 +140,11 @@ class EDA_algorithm:
             }
             
     # step 4: Identification of relationships between variable pairs
-    def getCorrelations(self):
+    def getCorrelations(self) -> np:
         return self.data.getHistory().corr()
     
     # this function could be deleted, if it's possible to render a dinamics heatmaps in frontend side
-    def getHeatMap(self):
+    def getHeatMap(self) -> dict:
         dataCorr = self.getCorrelations()
         try:
             plt.figure(figsize=(14,7))
@@ -161,7 +161,7 @@ class EDA_algorithm:
                 "message":"Error: The heatmap couldn't been saved into the server",
                 "status" : False
             }
-    def runProcess(self):
+    def runProcess(self) -> dict:
         try:
             step1 = self.getDescriptionOfData()
             step2 = self.getMissingData()
@@ -196,45 +196,48 @@ class EDA_algorithm:
 
 class PCA_algorithm:
     def __init__(self , data, eda):
-        self.data = data
-        self.eda = eda
-        self.MStandard = StandardScaler().fit_transform(self.data.getHistory())
-        self.pca_matrix = PCA(n_components=None)
-        self.pca_matrix.fit(self.MStandard) 
+        self.data : Data = data
+        self.eda : EDA_algorithm = eda
+        self.MStandard = None
+        self.pca_matrix = None
         self.numberOfPrincipalComponents = 0
-        self.HistStandart = pd.DataFrame(self.MStandard, columns=self.data.getHistory().columns)
-        self.componentLoads = pd.DataFrame(abs(self.pca_matrix.components_), columns=self.data.getHistory().columns)
+        self.df_MStandart = None
+        self.componentLoads = None
         
     # step 1: Identify possible correlated variables
-    def getCorrelations(self):
-        return self.eda.getCorrelations().to_dict()
+    def getCorrelations(self) -> np:
+        return self.eda.getCorrelations()
     
     # this function could be deleted, if it's possible to render a dinamic heatmps in frontend side
     def getHeatMap(self):
         return self.eda.getHeatMap()
             
     # step 2: Data standardization
-    def standardize(self):
-        return self.HistStandart.to_dict()
+    def standardize(self) -> np:
+        stData = StandardScaler()
+        self.MStandard = stData.fit_transform(self.data.getHistory())
+        self.df_MStandart = pd.DataFrame(self.MStandard, columns=self.data.getHistory().columns)
+        return self.df_MStandart
     
     # step 3 y 4: The covariance or correlation matrix is calculated, and the components (eigen-vectors) and the variance (eigen-values) are calculated.
-    def covariance_matrix(self):
+    def covariance_matrix(self) -> np.ndarray:
+        self.pca_matrix = PCA(n_components=10)
+        self.pca_matrix.fit(self.MStandard)
         return self.pca_matrix.components_
     # step 5: The number of principal components is decided
-                
-    def getNumberOfPrincipalComponents(self):
-        return self.numberOfPrincipalComponents
-    
     def setNumberOfPrincipalComponents(self):
         Varianza = self.pca_matrix.explained_variance_ratio_
         for i in range(len(Varianza)):
             s = sum(Varianza[0:i+1])
-            if s > 0.75 and s < 0.90:
+            if s >= 0.75 and s <= 0.90:
                 self.numberOfPrincipalComponents = i+1
                 
-        return self.getNumberOfPrincipalComponents()
+    def getNumberOfPrincipalComponents(self) -> int:
+        self.setNumberOfPrincipalComponents()
+        return self.numberOfPrincipalComponents
+    
     # this function could be deleted, if it's possible to render a dinamic heatmps in frontend side
-    def cumulativeVariance_components(self):
+    def cumulativeVariance_components(self) -> dict:
         try:
             plt.plot(np.cumsum(self.pca_matrix.explained_variance_ratio_))
             plt.xlabel('Número de componentes')
@@ -252,7 +255,7 @@ class PCA_algorithm:
                 "status" : False
             }
     
-    # step 6: The proportion of relevances is examined
+    # step 6: The proportion of relevances is examined, check this
     def getComponentLoads(self):
         return self.componentLoads
     
@@ -262,8 +265,7 @@ class PCA_algorithm:
         for i in firstComponents:
             if len(list(filter(lambda elem : elem >= 0.50 ,firstComponents[i].values))) > 0:
                 columns.append(i)
-        newComponentLoads = self.getComponentLoads().filter(items = columns)
-        self.componentLoads = newComponentLoads
+        self.componentLoads = self.getComponentLoads().filter(items = columns)
         
         return self.getComponentLoads()
     
