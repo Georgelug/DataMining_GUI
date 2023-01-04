@@ -20,7 +20,7 @@ from sklearn.svm import SVC
 from kneed import KneeLocator
 
 class Data:
-    def __init__(self,ticker,name,date_start = '2019-1-1',date_end = '2022-1-1',interval = '1d'):
+    def __init__(self,ticker : str,name : str,date_start : str = '2019-1-1',date_end : str = '2022-1-1',interval : str  = '1d'):
         self.ticker : str = ticker
         self.name : str = name
         self.date_start : str = date_start
@@ -28,7 +28,7 @@ class Data:
         self.interval : str = interval
         try:
             self.data : yf.Ticker = yf.Ticker(ticker)
-            self.Hist : np = self.data.history(start = self.date_start, end = self.date_end, interval=interval)
+            self.Hist : pd.DataFrame = self.data.history(start = self.date_start, end = self.date_end, interval=interval)
         except Exception as e:
             print(e)
             self.data = None
@@ -47,7 +47,7 @@ class Data:
     def getData(self) -> yf.Ticker:
         return self.data
     
-    def getHistory(self) -> np:
+    def getHistory(self) -> pd.DataFrame:
         return self.Hist
     
     def getDateRange(self) -> dict:
@@ -68,7 +68,7 @@ class Data:
         }
 
 class EDA_algorithm:
-    def __init__(self , data):
+    def __init__(self , data : Data):
         self.data : Data = data
     
     # Step 1: Description of the data structure
@@ -195,7 +195,7 @@ class EDA_algorithm:
 
 
 class PCA_algorithm:
-    def __init__(self , data, eda):
+    def __init__(self , data : Data, eda : EDA_algorithm):
         self.data : Data = data
         self.eda : EDA_algorithm = eda
         self.MStandard = None
@@ -205,15 +205,15 @@ class PCA_algorithm:
         self.componentLoads = None
         
     # step 1: Identify possible correlated variables
-    def getCorrelations(self) -> np:
+    def getCorrelations(self) -> pd.DataFrame:
         return self.eda.getCorrelations()
     
     # this function could be deleted, if it's possible to render a dinamic heatmps in frontend side
-    def getHeatMap(self):
+    def getHeatMap(self) -> dict:
         return self.eda.getHeatMap()
             
     # step 2: Data standardization
-    def standardize(self) -> np:
+    def standardize(self) -> pd.DataFrame:
         stData = StandardScaler()
         self.MStandard = stData.fit_transform(self.data.getHistory())
         self.df_MStandart = pd.DataFrame(self.MStandard, columns=self.data.getHistory().columns)
@@ -256,27 +256,40 @@ class PCA_algorithm:
             }
     
     # step 6: The proportion of relevances is examined, check this
-    def getComponentLoads(self):
+    def setComponentsLoads(self):
+        self.componentLoads = pd.DataFrame(abs(self.pca_matrix.components_),columns=self.data.getHistory().columns)
+    def getComponentLoads(self) -> pd.DataFrame:
         return self.componentLoads
     
-    def dropLessSignificantColumns(self):
+    def dropLessSignificantColumns(self) -> pd.DataFrame:
+        self.setComponentsLoads()
         firstComponents = self.getComponentLoads().head(self.numberOfPrincipalComponents + 1)
         columns = []
         for i in firstComponents:
             if len(list(filter(lambda elem : elem >= 0.50 ,firstComponents[i].values))) > 0:
                 columns.append(i)
-        self.componentLoads = self.getComponentLoads().filter(items = columns)
+        self.componentLoads = self.componentLoads.filter(items = columns)
         
         return self.getComponentLoads()
     
     # Check this function, we need to convert the dataframes to dictionaries
     def runProcess(self):
         try:
-            step1 = self.getCorrelations()
-            step2 = self.standardize()
-            step3_4 = self.covariance_matrix()
-            step5 = self.setNumberOfPrincipalComponents()
-            step6 = self.dropLessSignificantColumns()
+            step1 = {
+                        "correlations":self.getCorrelations().to_dict()
+                    }
+            step2 = {
+                        "standardized_dataFrame":self.standardize().to_dict()
+                    }
+            step3_4 = {
+                        "covariance_matrix":self.covariance_matrix().tolist()
+                    }
+            step5 = {
+                        "n_PrincipalComponents":self.getNumberOfPrincipalComponents()
+                    }
+            step6 = {
+                        "componentLoads":self.dropLessSignificantColumns().to_dict()
+                    }
             date = datetime.now()
             return {
                 "message":"The process was successful",
@@ -299,15 +312,15 @@ class PCA_algorithm:
             }
             
 class Model:
-    def __init__(self , data ,eda):
+    def __init__(self , data : Data ,eda : EDA_algorithm):
         self.data = data
         self.eda = eda
-        self.Mdata = data.getHistory().drop(columns = ['Volume', 'Dividends', 'Stock Splits'])
-        self.Mdata = self.Mdata.dropna()
-        self.X = np.array(self.MData[['Open',
+        self.Mdata : np = data.getHistory().drop(columns = ['Volume', 'Dividends', 'Stock Splits'])
+        self.Mdata : np = self.Mdata.dropna()
+        self.X : np.ndarray = np.array(self.MData[['Open',
                     'High',
                     'Low']])
-        self.Y = np.array(self.MData[['Close']])
+        self.Y : np.ndarray = np.array(self.MData[['Close']])
         self.X_train = []
         self.X_test = []
         self.Y_train = []
@@ -328,7 +341,7 @@ class Model:
         self.model.fit(self.X_train, self.Y_train)
         self.Y_Pronostic = self.model.predict(self.X_test)
     
-    def infoModel(self):
+    def infoModel(self) -> dict:
         return {
             "criteria" : self.model.criterion,
             "variables_importance" : self.model.feature_importances_,
@@ -339,7 +352,7 @@ class Model:
         }
         
     # this function could be deleted, if it's possible to render a dinamic plot in frontend side
-    def plotModel(self):
+    def plotModel(self) -> dict:
         try:
             plt.figure(figsize=(20, 5))
             plt.plot(self.Y_test, color='red', marker='+', label='Real')
@@ -361,7 +374,7 @@ class Model:
                 "status" : False
             }
     
-    def buildModel(self):
+    def buildModel(self) -> dict:
         try:
             self.set_trainTest()
             self.trainModel()
@@ -379,9 +392,9 @@ class Model:
                     }
         
     # this function receives a df with columns 'Open': [] , 'High': [], 'Low' : []
-    def newPronostic(self,stockMarketSharePrice):
+    def newPronostic(self,stockMarketSharePrice : pd.DataFrame):
         try:
-            newPron = self.model.predict(stockMarketSharePrice)[0]
+            newPron = self.model.predict(stockMarketSharePrice).toList()
             date = datetime.now()
             return {
                     "message":"The pronostic has been created succesfully",
@@ -402,14 +415,14 @@ class Model:
                     "message":f"something is wrong, Error: {e}",
                     "status": False,
                     "time_stamp": date,
-                    "input":stockMarketSharePrice,
+                    "input":stockMarketSharePrice.to_dict(),
                     "output":{
                         "close": None
                     }
                 }
 
 class randomForestModel(Model):
-    def __init__(self , data, eda):
+    def __init__(self , data : Data, eda : EDA_algorithm):
         super().__init__(self, data, eda)
         
     def trainModel(self):
@@ -419,7 +432,7 @@ class randomForestModel(Model):
         
 
 class DtreeModel(Model):
-    def __init__(self , data, eda):
+    def __init__(self , data : Data, eda : EDA_algorithm):
         super().__init__(self, data, eda)
     
     def trainModel(self):
@@ -428,19 +441,19 @@ class DtreeModel(Model):
         self.Y_Pronostic = self.model.predict(self.X_test)
         
 class randomForestModel_Classifier(randomForestModel):
-    def __init__(self , data,eda, X, Y):
+    def __init__(self , data : Data, eda : EDA_algorithm, X : np.array, Y : np.array):
         super().__init__(self,data,eda)
-        self.X = X
-        self.Y = Y
+        self.X : np.array = X
+        self.Y : np.array = Y
 
 class Hybrid_kmeansRandomForest():
-    def __init__(self,data):
-        self.data = data
-        self.eda = EDA_algorithm(data)
-        self.Mdata = data.getHistory().drop(columns = ['Open', 'High','Low', 'Stock Splits']) # we select Close, Volume and Dividends
-        self.SMdata = StandardScaler().fit_transform(self.Mdata)
-        self.knee = KneeLocator(range(2, 10), [KMeans(n_clusters=i, random_state=0).fit(self.SMdata).inertia_ for i in range(2, 10)], curve="convex", direction="decreasing")
-        self.MParticional = KMeans(n_clusters= self.knee.elbow, random_state=0).fit(self.SMdata)
+    def __init__(self,data : Data):
+        self.data : Data = data
+        self.eda : EDA_algorithm = EDA_algorithm(data)
+        self.Mdata : pd.DataFrame = data.getHistory().drop(columns = ['Open', 'High','Low', 'Stock Splits']) # we select Close, Volume and Dividends
+        self.SMdata : pd.DataFrame = StandardScaler().fit_transform(self.Mdata)
+        self.knee : KneeLocator = KneeLocator(range(2, 10), [KMeans(n_clusters=i, random_state=0).fit(self.SMdata).inertia_ for i in range(2, 10)], curve="convex", direction="decreasing")
+        self.MParticional : KMeans = KMeans(n_clusters= self.knee.elbow, random_state=0).fit(self.SMdata)
         self.randomForest = None
         self.X = []
         self.Y = []
@@ -452,7 +465,7 @@ class Hybrid_kmeansRandomForest():
         self.__createLabels()
         return self.Mdata
 
-    def classify(self):
+    def classify(self) -> bool:
         try:
             CMdata = self.clusterize()
             self.X = np.array(CMdata.drop(columns = ['cluster']))
@@ -464,7 +477,7 @@ class Hybrid_kmeansRandomForest():
             return False
     
     # this function receives a df with columns 'Close': [] , 'Volume': [], 'Dividends' : [] 
-    def newClassification(self,stockMarketSharePrice):
+    def newClassification(self,stockMarketSharePrice : pd.DataFrame) -> dict:
         try:
             if not self.classify():
                 raise Exception()
@@ -489,7 +502,7 @@ class Hybrid_kmeansRandomForest():
                     "message":f"something is wrong, Error: {e}",
                     "status": False,
                     "time_stamp": date,
-                    "input":stockMarketSharePrice,
+                    "input":stockMarketSharePrice.to_dict(),
                     "output":{
                         "cluster": None
                     }
@@ -497,9 +510,9 @@ class Hybrid_kmeansRandomForest():
     
 
 class SVM(Model):
-    def __init__(self,data,eda,kernel):
+    def __init__(self,data : Data , eda : EDA_algorithm , kernel : str):
         super().__init__(self,data, eda)
-        self.kernel = kernel
+        self.kernel : str = kernel
     def trainModel(self):
         self.model = SVC(kernel = self.kernel)
         self.model.fit(self.X_train, self.Y_train)
