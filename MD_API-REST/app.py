@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, redirect, url_for
 import pandas as pd
 import json
 
@@ -59,12 +59,26 @@ def PCA():
     return jsonify({
         "message" : "Error, there is no data"
     })
-    
+
+@app.route("/Model")
+def menuModel():
+    if theresData and theresEDA:
+        return jsonify({
+                    "models_available": {
+                        1 : "Decision Tree Regressor",
+                        2 : "Random Forest Regressor",
+                        3 : "Hybrid model (kmeans + Random Forest classifier)",
+                        4 : "Support Vector Classification"
+                    }
+                })
+    return jsonify({
+        "message" : "Error, there is no data"
+    })
 @app.route("/Model/Dtree",methods = ['POST','GET'])
 def Dtree():
     if theresData and theresEDA:
         if request.method == "GET":
-            global dtree
+            global dTree
             dTree = DtreeModel(data,eda)
             global dTreeresponse
             dTreeresponse = dTree.buildModel()
@@ -73,7 +87,9 @@ def Dtree():
             })
         else:
             if dTreeresponse["status"]:
-                newPronostic = dTree.newPronostic(request.json)
+                req = request.json
+                dfreq = pd.DataFrame.from_dict(req)
+                newPronostic = dTree.newPronostic(dfreq)
                 return jsonify({
                     "dTree": newPronostic
                 })
@@ -94,7 +110,9 @@ def randomForest():
             })
         else:
             if rfResponse["status"]:
-                newPronostic = rF.newPronostic(request.json)
+                req = request.json
+                dfreq = pd.DataFrame.from_dict(req)
+                newPronostic = rF.newPronostic(dfreq)
                 return jsonify({
                     "dTree": newPronostic
                 })
@@ -113,7 +131,10 @@ def hybrid():
                 "hybrid": "The model hybrid was created successfully"
             })
         else:
-            newclass = hyb.newClassification(request.json)
+            req = request.json
+            dfreq = pd.DataFrame.from_dict(req)
+            newclass = hyb.newClassification(dfreq)
+            print(newclass)
             if newclass["status"]:
                 return jsonify({
                     "hybridModel": newclass
@@ -128,7 +149,7 @@ def svm(kernel):
     if theresData and theresEDA:
         if request.method == "GET":
             global svm
-            svm = SVM(data,eda,kernel)
+            svm = SVM_Model(data,eda,kernel)
             global svmResponse
             svmResponse = svm.buildModel()
             return jsonify({
@@ -136,7 +157,9 @@ def svm(kernel):
             })
         else:
             if svmResponse["status"]:
-                newPronostic = svm.newPronostic(request.json)
+                req = request.json
+                dfreq = pd.DataFrame.from_dict(req)
+                newPronostic = svm.newPronostic(dfreq)
                 return jsonify({
                     "SVM": newPronostic
                 })

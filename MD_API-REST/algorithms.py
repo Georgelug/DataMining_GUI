@@ -178,7 +178,7 @@ class EDA_algorithm:
             return {
                 "message":"The process was successful",
                 "status": True,
-                "time_stamp": date,
+                "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                 "process":{
                     "step1": step1,
                     "step2": step2,
@@ -190,7 +190,7 @@ class EDA_algorithm:
             return {
                 "message":f"something is wrong, Error: {e}",
                 "status": False,
-                "time_stamp": date
+                "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S")
             }
 
 
@@ -221,7 +221,7 @@ class PCA_algorithm:
     
     # step 3 y 4: The covariance or correlation matrix is calculated, and the components (eigen-vectors) and the variance (eigen-values) are calculated.
     def covariance_matrix(self) -> np.ndarray:
-        self.pca_matrix = PCA(n_components=10)
+        self.pca_matrix = PCA(n_components=7)
         self.pca_matrix.fit(self.MStandard)
         return self.pca_matrix.components_
     # step 5: The number of principal components is decided
@@ -294,7 +294,7 @@ class PCA_algorithm:
             return {
                 "message":"The process was successful",
                 "status": True,
-                "time_stamp": date,
+                "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                 "process":{
                     "step1": step1,
                     "step2": step2,
@@ -308,19 +308,19 @@ class PCA_algorithm:
             return {
                 "message":f"something is wrong, Error: {e}",
                 "status": False,
-                "time_stamp": date
+                "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S")
             }
             
 class Model:
     def __init__(self , data : Data ,eda : EDA_algorithm):
         self.data = data
         self.eda = eda
-        self.Mdata : np = data.getHistory().drop(columns = ['Volume', 'Dividends', 'Stock Splits'])
-        self.Mdata : np = self.Mdata.dropna()
-        self.X : np.ndarray = np.array(self.MData[['Open',
+        self.Mdata : pd.DataFrame = data.getHistory().drop(columns = ['Volume', 'Dividends', 'Stock Splits'])
+        self.Mdata = self.Mdata.dropna()
+        self.X : np.ndarray = np.array(self.Mdata[['Open',
                     'High',
                     'Low']])
-        self.Y : np.ndarray = np.array(self.MData[['Close']])
+        self.Y : np.ndarray = np.array(self.Mdata[['Close']])
         self.X_train = []
         self.X_test = []
         self.Y_train = []
@@ -381,25 +381,25 @@ class Model:
             date = datetime.now()
             return {"message":"The model has been created succesfully",
                     "status": True,
-                    "time_stamp": date,
+                    "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "model_info": self.infoModel()
                     }
         except Exception as e:
             date = datetime.now()
-            return {"message":f"Error, Something is wrong {e}",
+            return {"message":f"Error unable to build the model, Something is wrong: {e}",
                     "status": False,
-                    "time_stamp": date 
+                    "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S") 
                     }
         
     # this function receives a df with columns 'Open': [] , 'High': [], 'Low' : []
-    def newPronostic(self,stockMarketSharePrice : pd.DataFrame):
+    def newPronostic(self,stockMarketSharePrice : pd.DataFrame) -> dict:
         try:
-            newPron = self.model.predict(stockMarketSharePrice).toList()
+            newPron = self.model.predict(stockMarketSharePrice)[0]
             date = datetime.now()
             return {
                     "message":"The pronostic has been created succesfully",
                     "status": True,
-                    "time_stamp": date,
+                    "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "input":{
                         "Open" : stockMarketSharePrice["Open"], 
                         "High" : stockMarketSharePrice["High"], 
@@ -414,7 +414,7 @@ class Model:
             return {
                     "message":f"something is wrong, Error: {e}",
                     "status": False,
-                    "time_stamp": date,
+                    "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "input":stockMarketSharePrice.to_dict(),
                     "output":{
                         "close": None
@@ -423,7 +423,7 @@ class Model:
 
 class randomForestModel(Model):
     def __init__(self , data : Data, eda : EDA_algorithm):
-        super().__init__(self, data, eda)
+        super().__init__(data, eda)
         
     def trainModel(self):
         self.model = RandomForestRegressor(n_estimators=100, max_depth=8, min_samples_split=4, min_samples_leaf=2, random_state=0)
@@ -433,7 +433,7 @@ class randomForestModel(Model):
 
 class DtreeModel(Model):
     def __init__(self , data : Data, eda : EDA_algorithm):
-        super().__init__(self, data, eda)
+        super().__init__(data, eda)
     
     def trainModel(self):
         self.model = DecisionTreeRegressor(max_depth=10, min_samples_split=4, min_samples_leaf=2, random_state=0)
@@ -442,7 +442,7 @@ class DtreeModel(Model):
         
 class randomForestModel_Classifier(randomForestModel):
     def __init__(self , data : Data, eda : EDA_algorithm, X : np.array, Y : np.array):
-        super().__init__(self,data,eda)
+        super().__init__(data,eda)
         self.X : np.array = X
         self.Y : np.array = Y
 
@@ -474,6 +474,7 @@ class Hybrid_kmeansRandomForest():
             self.randomForest.buildModel()
             return True
         except Exception as e:
+            print(e)
             return False
     
     # this function receives a df with columns 'Close': [] , 'Volume': [], 'Dividends' : [] 
@@ -486,7 +487,7 @@ class Hybrid_kmeansRandomForest():
             return {
                     "message":"The classification has been created succesfully",
                     "status": True,
-                    "time_stamp": date,
+                    "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "input":{
                         "Close" : stockMarketSharePrice["Close"], 
                         "Volume" : stockMarketSharePrice["Volume"], 
@@ -501,7 +502,7 @@ class Hybrid_kmeansRandomForest():
             return {
                     "message":f"something is wrong, Error: {e}",
                     "status": False,
-                    "time_stamp": date,
+                    "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "input":stockMarketSharePrice.to_dict(),
                     "output":{
                         "cluster": None
@@ -509,11 +510,36 @@ class Hybrid_kmeansRandomForest():
                 }
     
 
-class SVM(Model):
-    def __init__(self,data : Data , eda : EDA_algorithm , kernel : str):
-        super().__init__(self,data, eda)
+class SVM_Model(Model):
+    def __init__(self,data : Data , eda : EDA_algorithm , kernel: str  = 'linear'):
+        super().__init__(data, eda)
         self.kernel : str = kernel
     def trainModel(self):
         self.model = SVC(kernel = self.kernel)
-        self.model.fit(self.X_train, self.Y_train)
+        print(type(self.X_train), type(self.Y_train))
+        self.model.fit(np.squeeze(self.X_train), np.squeeze(self.Y_train)) # fix this error
+        print(self.model)
         self.Y_Pronostic = self.model.predict(self.X_test)
+
+if __name__ == "__main__":
+    dataInfoTicker = {
+                        "ticker" : "LIVEPOL1.MX",
+                        "name" : "Liverpool",
+                        "date_start" : "2019-1-1",
+                        "date_end" : "2022-1-1"
+                    }
+    newPron = pd.DataFrame.from_dict({   
+                                        "Open": [108.2],
+                                        "High": [112.2], 
+                                        "Low": [100.8]
+                                    })
+    data = Data(
+        ticker = dataInfoTicker["ticker"],
+        name = dataInfoTicker["name"],
+        date_start = dataInfoTicker["date_start"],
+        date_end = dataInfoTicker["date_end"]
+    )
+    eda = EDA_algorithm(data)
+    rd = SVM_Model(data,eda)
+    print(rd.buildModel())
+    print(rd.newPronostic(newPron))
