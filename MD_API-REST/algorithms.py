@@ -8,7 +8,7 @@ import json
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn import model_selection
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor,RandomForestClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
@@ -17,7 +17,9 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin_min
 from sklearn.svm import SVC
+from sklearn import preprocessing,utils
 from kneed import KneeLocator
+import inspect
 
 class Data:
     def __init__(self,ticker : str,name : str,date_start : str = '2019-1-1',date_end : str = '2022-1-1',interval : str  = '1d'):
@@ -327,6 +329,7 @@ class Model:
         self.Y_test = []
         self.model = None
         self.Y_Pronostic = []
+        self.isSVM = False
         
     def set_trainTest(self):
         self.X_train, self.X_test, self.Y_train, self.Y_test = model_selection.train_test_split(self.X, 
@@ -343,8 +346,8 @@ class Model:
     
     def infoModel(self) -> dict:
         return {
-            "criteria" : self.model.criterion,
-            "variables_importance" : self.model.feature_importances_,
+            "criteria" : self.model.criterion if not self.isSVM else None,
+            "variables_importance" : self.model.feature_importances_ if not self.isSVM else None,
             "mae": mean_absolute_error(self.Y_test, self.Y_Pronostic),
             "mse": mean_squared_error(self.Y_test, self.Y_Pronostic),
             "rmse": mean_squared_error(self.Y_test, self.Y_Pronostic,squared=False),
@@ -440,12 +443,17 @@ class DtreeModel(Model):
         self.model.fit(self.X_train, self.Y_train)
         self.Y_Pronostic = self.model.predict(self.X_test)
         
-class randomForestModel_Classifier(randomForestModel):
+class randomForestModel_Classifier(Model):
     def __init__(self , data : Data, eda : EDA_algorithm, X : np.array, Y : np.array):
         super().__init__(data,eda)
         self.X : np.array = X
         self.Y : np.array = Y
-
+    def trainModel(self):
+        self.model = RandomForestClassifier(n_estimators=105, max_depth=8, min_samples_split=4, min_samples_leaf=2, random_state=1234)
+        self.model.fit(self.X_train, self.Y_train)
+        self.Y_Pronostic = self.model.predict(self.X_test)
+        print(self.model)
+        
 class Hybrid_kmeansRandomForest():
     def __init__(self,data : Data):
         self.data : Data = data
@@ -460,6 +468,7 @@ class Hybrid_kmeansRandomForest():
     def __createLabels(self):
         self.MParticional.predict(self.SMdata)
         self.Mdata['cluster'] = self.MParticional.labels_
+        print(f"Data columns: {self.Mdata.columns}")
     
     def clusterize(self):
         self.__createLabels()
@@ -470,11 +479,12 @@ class Hybrid_kmeansRandomForest():
             CMdata = self.clusterize()
             self.X = np.array(CMdata.drop(columns = ['cluster']))
             self.Y = np.array(CMdata['cluster'])
-            self.randomForest = randomForestModel_Classifier(self.data, self.X, self.Y)
+            print(f"dimensions\nx: {self.X.ndim} y: {self.Y.ndim}")
+            self.randomForest = randomForestModel_Classifier(self.data, self.eda, self.X, self.Y)
             self.randomForest.buildModel()
             return True
         except Exception as e:
-            print(e)
+            print(f"Error in classification: {e}")
             return False
     
     # this function receives a df with columns 'Close': [] , 'Volume': [], 'Dividends' : [] 
@@ -482,7 +492,7 @@ class Hybrid_kmeansRandomForest():
         try:
             if not self.classify():
                 raise Exception()
-            newPron = self.randomForest.newPronostic(stockMarketSharePrice)[0]
+            newPron = self.randomForest.model.predict(stockMarketSharePrice)[0]
             date = datetime.now()
             return {
                     "message":"The classification has been created succesfully",
@@ -511,13 +521,16 @@ class Hybrid_kmeansRandomForest():
     
 
 class SVM_Model(Model):
-    def __init__(self,data : Data , eda : EDA_algorithm , kernel: str  = 'linear'):
+    def __init__(self,data : Data , eda : EDA_algorithm , kernel: str  = 'poly'):
         super().__init__(data, eda)
         self.kernel : str = kernel
+        self.isSVM = True
     def trainModel(self):
         self.model = SVC(kernel = self.kernel)
         print(type(self.X_train), type(self.Y_train))
-        self.model.fit(np.squeeze(self.X_train), np.squeeze(self.Y_train)) # fix this error
+        lab = preprocessing.LabelEncoder()
+        y_transformed = lab.fit_transform(self.Y_train)
+        self.model.fit(np.squeeze(self.X_train), y_transformed) # fix this error
         print(self.model)
         self.Y_Pronostic = self.model.predict(self.X_test)
 
@@ -529,9 +542,9 @@ if __name__ == "__main__":
                         "date_end" : "2022-1-1"
                     }
     newPron = pd.DataFrame.from_dict({   
-                                        "Open": [108.2],
-                                        "High": [112.2], 
-                                        "Low": [100.8]
+                                        "Close": [108.2],
+                                        "Volume": [112.2], 
+                                        "Dividends": [100.8]
                                     })
     data = Data(
         ticker = dataInfoTicker["ticker"],
@@ -540,6 +553,7 @@ if __name__ == "__main__":
         date_end = dataInfoTicker["date_end"]
     )
     eda = EDA_algorithm(data)
-    rd = SVM_Model(data,eda)
-    print(rd.buildModel())
-    print(rd.newPronostic(newPron))
+    rd = Hybrid_kmeansRandomForest(data)
+    # print(rd.buildModel())
+    print(rd.newClassification(newPron))
+    
