@@ -128,7 +128,7 @@ def hybrid():
             global hyb
             hyb = Hybrid_kmeansRandomForest(data)
             return jsonify({
-                "hybrid": "The model hybrid was created successfully"
+                "hybridmodel": "The model hybrid was created successfully"
             })
         else:
             req = request.json
@@ -153,7 +153,7 @@ def svm(kernel):
             global svmResponse
             svmResponse = svm.buildModel()
             return jsonify({
-                "randomForest": svmResponse
+                "SVM": svmResponse
             })
         else:
             if svmResponse["status"]:

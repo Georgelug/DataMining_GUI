@@ -274,7 +274,6 @@ class PCA_algorithm:
         
         return self.getComponentLoads()
     
-    # Check this function, we need to convert the dataframes to dictionaries
     def runProcess(self):
         try:
             step1 = {
@@ -359,7 +358,7 @@ class Model:
         try:
             plt.figure(figsize=(20, 5))
             plt.plot(self.Y_test, color='red', marker='+', label='Real')
-            plt.plot(self.Y_Pronostico, color='green', marker='+', label='Estimado')
+            plt.plot(self.Y_Pronostic, color='green', marker='+', label='Estimado')
             plt.xlabel('Fecha')
             plt.ylabel('Precio de las acciones')
             plt.title(f'Pronóstico de las acciones de {self.data.getName()}')
@@ -385,7 +384,11 @@ class Model:
             return {"message":"The model has been created succesfully",
                     "status": True,
                     "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
-                    "model_info": self.infoModel()
+                    "model_info": self.infoModel(),
+                    "toPlot":{
+                        "yTest": self.Y_test.flatten().tolist(),
+                        "yPronostic": self.Y_Pronostic.tolist(),
+                    }
                     }
         except Exception as e:
             date = datetime.now()
@@ -496,6 +499,8 @@ class Hybrid_kmeansRandomForest():
             date = datetime.now()
             return {
                     "message":"The classification has been created succesfully",
+                    "clusters":self.Mdata.groupby(['cluster'])['cluster'].count().to_dict(),
+                    "dfCluster": self.Mdata.to_json(orient = 'records'),
                     "status": True,
                     "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "input":{
@@ -546,6 +551,11 @@ if __name__ == "__main__":
                                         "Volume": [112.2], 
                                         "Dividends": [100.8]
                                     })
+    # newPron = pd.DataFrame.from_dict({   
+    #                                     "Open": [108.2],
+    #                                     "High": [112.2], 
+    #                                     "Low": [100.8]
+    #                                 })
     data = Data(
         ticker = dataInfoTicker["ticker"],
         name = dataInfoTicker["name"],
@@ -555,5 +565,9 @@ if __name__ == "__main__":
     eda = EDA_algorithm(data)
     rd = Hybrid_kmeansRandomForest(data)
     # print(rd.buildModel())
-    print(rd.newClassification(newPron))
-    
+    # print(rd.newPronostic(newPron))
+    info = rd.newClassification(newPron)
+    # print(info)
+    df = pd.read_json(info["dfCluster"])
+    print(df.describe())
+    # rd.plotModel()
