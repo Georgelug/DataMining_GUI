@@ -1,12 +1,18 @@
 {
-    "ticker" : "LIVEPOL1.MX",
-    "name" : "Liverpool",
-    "date_start" : "2019-1-1",
-    "date_end" : "2022-1-1"
-}
-
-{   
-    "Open": [108.2],
-    "High": [112.2], 
-    "Low": [100.8]
+    "data":{
+        "ticker" : "LIVEPOL1.MX",
+        "name" : "Liverpool",
+        "date_start" : "2019-1-1",
+        "date_end" : "2022-1-1"
+    },
+    "model":{   
+        "Open": [108.2],
+        "High": [112.2], 
+        "Low": [100.8]
+    },
+    "hybrid":{   
+        "Close": [108.2],
+        "Volume": [112.2], 
+        "Dividends": [100.8]
+    }
 }

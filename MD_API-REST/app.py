@@ -143,7 +143,7 @@ def hybrid():
         "message" : "Error, there is no data"
     })
     
-    
+# kernel: linear, poly, rbf o sigmoid
 @app.route("/Model/SVM/<string:kernel>",methods = ['POST','GET'])
 def svm(kernel):
     if theresData and theresEDA:

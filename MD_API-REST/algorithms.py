@@ -347,7 +347,7 @@ class Model:
     def infoModel(self) -> dict:
         return {
             "criteria" : self.model.criterion if not self.isSVM else None,
-            "variables_importance" : self.model.feature_importances_ if not self.isSVM else None,
+            "variables_importance" : self.model.feature_importances_.tolist() if not self.isSVM else None,
             "mae": mean_absolute_error(self.Y_test, self.Y_Pronostic),
             "mse": mean_squared_error(self.Y_test, self.Y_Pronostic),
             "rmse": mean_squared_error(self.Y_test, self.Y_Pronostic,squared=False),
@@ -397,16 +397,16 @@ class Model:
     # this function receives a df with columns 'Open': [] , 'High': [], 'Low' : []
     def newPronostic(self,stockMarketSharePrice : pd.DataFrame) -> dict:
         try:
-            newPron = self.model.predict(stockMarketSharePrice)[0]
+            newPron = self.model.predict(stockMarketSharePrice).tolist()[0]
             date = datetime.now()
             return {
                     "message":"The pronostic has been created succesfully",
                     "status": True,
                     "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "input":{
-                        "Open" : stockMarketSharePrice["Open"], 
-                        "High" : stockMarketSharePrice["High"], 
-                        "Low" : stockMarketSharePrice["Low"]
+                        "Open" : stockMarketSharePrice["Open"].to_list(), 
+                        "High" : stockMarketSharePrice["High"].to_list(), 
+                        "Low" : stockMarketSharePrice["Low"].to_list()
                         },
                     "output":{
                         "close": newPron
@@ -492,16 +492,16 @@ class Hybrid_kmeansRandomForest():
         try:
             if not self.classify():
                 raise Exception()
-            newPron = self.randomForest.model.predict(stockMarketSharePrice)[0]
+            newPron = self.randomForest.model.predict(stockMarketSharePrice).tolist()[0]
             date = datetime.now()
             return {
                     "message":"The classification has been created succesfully",
                     "status": True,
                     "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
                     "input":{
-                        "Close" : stockMarketSharePrice["Close"], 
-                        "Volume" : stockMarketSharePrice["Volume"], 
-                        "Dividends" : stockMarketSharePrice["Dividends"]
+                        "Close" : stockMarketSharePrice["Close"].to_list(), 
+                        "Volume" : stockMarketSharePrice["Volume"].to_list(), 
+                        "Dividends" : stockMarketSharePrice["Dividends"].to_list()
                         },
                     "output":{
                         "cluster": newPron
