@@ -6,3 +6,4 @@ seaborn
 yfinance
 scikit-learn
 kneed
+Flask-CORS

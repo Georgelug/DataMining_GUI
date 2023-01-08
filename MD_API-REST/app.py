@@ -1,10 +1,10 @@
-from flask import Flask, jsonify, request, redirect, url_for
+from flask import Flask, jsonify, request
+from flask_cors import CORS
 import pandas as pd
-import json
-
 
 from algorithms import *
 app = Flask(__name__) # our app
+CORS(app)
 
 theresData = False
 theresEDA = False
@@ -13,6 +13,7 @@ theresEDA = False
 @app.route('/getData',methods = ['POST'])
 def getData():
     dataInfoTicker = request.json
+    print(dataInfoTicker)
     global data
     data = Data(
         ticker = dataInfoTicker["ticker"],
@@ -172,4 +173,4 @@ def svm(kernel):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=3000)
