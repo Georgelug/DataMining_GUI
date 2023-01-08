@@ -42,7 +42,7 @@ def EDA():
         global theresEDA
         theresEDA = True
         return jsonify({
-                "EDA":eda.runProcess()
+                "eda":eda.runProcess()
             })
     
     return jsonify({

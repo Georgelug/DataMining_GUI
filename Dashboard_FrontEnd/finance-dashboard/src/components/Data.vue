@@ -1,6 +1,6 @@
 <template>
     <!-- <div v-html="plot"></div> -->
-    <div class="mt-5">
+    <div class="mt-5" v-if="checkData">
         <div class="col-lg8 offset-lg-3">
             <div class="table-responsive">
                 <DataTable :data="hist" :columns="columns" :options="{responsive:true, autoWidth:false, dom:'Bfrtip', buttons:btns}" class="table table-striped table-bordered display">
@@ -87,6 +87,13 @@
                 ]
             }
         },
+        methods:{
+            checkData(){
+                return this.hist ? true : false;
+            }
+        },
+        computed:{
+        }
     }
 </script>
 

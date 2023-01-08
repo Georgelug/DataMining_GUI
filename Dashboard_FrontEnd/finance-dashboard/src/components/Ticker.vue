@@ -1,10 +1,10 @@
 <template>
-    <div class="mt-5">
+    <div class="mt-5" >
         <h2 class="display-4">Finance dashboard</h2>
         <p class="lead">
             To search for a company listed on the stock market, please fill out all the fields requested
         </p>
-        <form class="form-group" @submit="postData" method="post" action="">
+        <form class="form-group" @submit="postData"  method="post" action="">
             <div class="form-group row">
                 <label for="colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Name</label>
                 <div class="col-sm-10">
@@ -32,16 +32,17 @@
             </div>
             
             <div class="col-auto">
-                <input type="reset" class="btn btn-secondary mb-2" value="reset">
+                <input  type="reset" class="btn btn-secondary mb-2" value="reset">
             </div>
             <div class="col-auto">
-                <input type="submit" class="btn btn-primary mb-2" value="search">
+                <input  type="submit" class="btn btn-primary mb-2" value="search">
             </div>
-
+            
         </form>
     </div>
     
     <div class="mt-5" v-if="checkData">
+        
         <div class="card" style="width: 18rem;">
             <div class="card-body">
                 <h5 class="card-title">{{ posts.name }}</h5>
@@ -50,24 +51,44 @@
                     <li>Initial date: {{ posts.date_start }}</li>
                     <li>Final date: {{ posts.date_end}}</li>
                 </ul>
+                <div class="col-auto">
+                        <button @click='resetData' class="btn btn-danger mb-2">get another ticker data</button>
+                </div>
             </div>
         </div>
+        <DataFrameTable :hist=history></DataFrameTable>
+
+        <div v-if="checkData">
+            <EDA :tickerData=true></EDA>
+            <PCA></PCA>
+            <PronosticModels></PronosticModels>
+            <HybridModel></HybridModel> 
+        </div>
+
     </div>
 
-    <DataFrameTable :hist=history></DataFrameTable>
 
 </template>
     
 <script>
 import {DataFrame} from "danfojs";
 import DataFrameTable from './Data.vue'
+import EDA from './EDA.vue'
+import PCA from './PCA.vue'
+import PronosticModels from './Models.vue'
+import HybridModel from './HybridModel.vue'
 // import {Series} from 'danfojs/dist/core/series';
 
 export default {
     name: 'TickerFinance',
     components:{
-        DataFrameTable
+        DataFrameTable,
+        EDA,
+        PCA,
+        PronosticModels,
+        HybridModel
     },
+    props: ['value'],
     data(){
         return {
             posts:{
@@ -79,6 +100,7 @@ export default {
             res: null,
             history: null,
             dfHistory: null,
+            theresData: false,
         }
     },
     methods:{
@@ -96,16 +118,24 @@ export default {
             e.preventDefault();
             // console.table(this.posts);
         },
-
+        resetData(e){
+            e.preventDefault();
+            this.res = null;
+            this.history = null;
+        },
+        
+        emitResult(){
+            this.$emit('output', this.res)
+        }
     },
     computed:{
+        checkData(){
+            return this.res ? true : false
+        },
         checkDate(){
             return this.posts.date_start >= this.posts.date_end
         },
         today(){ return new Date().toJSON().slice(0, 10)},
-        checkData(){
-            return this.res ? true : false;
-        }
 
     }
 }

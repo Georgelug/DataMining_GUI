@@ -91,12 +91,14 @@ class EDA_algorithm:
     # Step 2: Identifying missing data
     def getMissingData(self) -> dict:
         dataNulls = self.data.getHistory().isnull().sum().to_dict()
+        # self.deleteNulls()
+        print(dataNulls)
         return {
                 "columnsNull":[i for i in dataNulls if dataNulls[i] != 0]
                 }
     
     def deleteNulls(self):
-        self.data.setHistory(self.data.getHistory().dropna())
+        self.data.getHistory().dropna()
     
     # Step 3: Identifying atypical values
     # this function could be deleted, if it's possible to render a dinamic histograms in frontend side
@@ -142,8 +144,8 @@ class EDA_algorithm:
             }
             
     # step 4: Identification of relationships between variable pairs
-    def getCorrelations(self) -> np:
-        return self.data.getHistory().corr()
+    def getCorrelations(self) -> pd.DataFrame:
+        return self.data.getHistory().corr(method='pearson')
     
     # this function could be deleted, if it's possible to render a dinamics heatmaps in frontend side
     def getHeatMap(self) -> dict:
@@ -166,16 +168,20 @@ class EDA_algorithm:
     def runProcess(self) -> dict:
         try:
             step1 = self.getDescriptionOfData()
+            # print(f"Step 1 {step1}")
             step2 = self.getMissingData()
+            # print(f"Step 2 {step2}")
             step3 = {
                     "histograms_status": self.create_histograms(),
                     "data_statistics" : self.data_statistics().to_dict(),
                     "graphic_status" : self.create_DataTickerGraphic()
                 }
+            # print(f"Step 3 {step3}")
             step4 = {
-                    "correlations": self.getCorrelations().to_dict(),
+                    "correlations": self.getCorrelations().to_json(orient = 'records'),
                     "heatmap_status": self.getHeatMap()  
                 }
+            print(f"Step 4 { step4}")
             date = datetime.now()
             return {
                 "message":"The process was successful",

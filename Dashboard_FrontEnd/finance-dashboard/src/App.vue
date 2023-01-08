@@ -1,18 +1,32 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png">
   <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-  <TickerFinance></TickerFinance>
+  <TickerFinance @output="checkTickerData($event)"></TickerFinance>
+  
 </template>
 
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
 import TickerFinance from './components/Ticker.vue'
 
+
 export default {
   name: 'App',
   components: {
-    TickerFinance
-  }
+    TickerFinance,
+  },
+  data(){
+    return {
+      theresData: false
+    }
+  },
+  methods:{
+    checkTickerData(value){
+            console.log(value);
+            this.theresData = value;
+    }
+  },
+  
 }
 </script>
 
