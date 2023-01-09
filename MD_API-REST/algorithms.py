@@ -283,10 +283,10 @@ class PCA_algorithm:
     def runProcess(self):
         try:
             step1 = {
-                        "correlations":self.getCorrelations().to_dict()
+                        "correlations":self.getCorrelations().to_json(orient = 'records')
                     }
             step2 = {
-                        "standardized_dataFrame":self.standardize().to_dict()
+                        "standardized_dataFrame":self.standardize().to_json(orient = 'records')
                     }
             step3_4 = {
                         "covariance_matrix":self.covariance_matrix().tolist()
@@ -295,7 +295,7 @@ class PCA_algorithm:
                         "n_PrincipalComponents":self.getNumberOfPrincipalComponents()
                     }
             step6 = {
-                        "componentLoads":self.dropLessSignificantColumns().to_dict()
+                        "componentLoads":self.dropLessSignificantColumns().to_json(orient = 'records')
                     }
             date = datetime.now()
             return {
@@ -539,9 +539,10 @@ class SVM_Model(Model):
     def trainModel(self):
         self.model = SVC(kernel = self.kernel)
         print(type(self.X_train), type(self.Y_train))
-        lab = preprocessing.LabelEncoder()
-        y_transformed = lab.fit_transform(self.Y_train)
-        self.model.fit(np.squeeze(self.X_train), y_transformed) # fix this error
+        print(self.X_train.flatten(), self.Y_train.flatten())
+        # lab = preprocessing.LabelEncoder()
+        # y_transformed = lab.fit_transform(self.Y_train)
+        self.model.fit(self.X_train, self.Y_train.flatten()) # fix this error
         print(self.model)
         self.Y_Pronostic = self.model.predict(self.X_test)
 

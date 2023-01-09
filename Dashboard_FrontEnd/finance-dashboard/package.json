@@ -21,7 +21,9 @@
     "pdfmake": "^0.2.7",
     "v-charts": "^1.19.0",
     "vue": "^3.2.13",
-    "vue-axios": "^3.5.2"
+    "vue-axios": "^3.5.2",
+    "zingchart": "^2.9.10",
+    "zingchart-vue": "^2.0.4"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

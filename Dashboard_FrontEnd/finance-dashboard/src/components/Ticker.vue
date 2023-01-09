@@ -6,25 +6,25 @@
         </p>
         <form class="form-group" @submit="postData"  method="post" action="">
             <div class="form-group row">
-                <label for="colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Name</label>
+                <label class="col-sm-2 col-form-label col-form-label-sm">Name</label>
                 <div class="col-sm-10">
                     <input type="search" class="form-control form-control-sm" v-model="posts.name" :state="true" placeholder="Company name">
                 </div>
             </div>
             <div class="form-group row">
-                <label for="colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Ticker</label>
+                <label class="col-sm-2 col-form-label col-form-label-sm">Ticker</label>
                 <div class="col-sm-10">
                     <input type="search" class="form-control form-control-sm" v-model="posts.ticker" :state="true" placeholder="Ticker company">
                 </div>
             </div>
             <div class="form-group row">
-                <label for="colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Initial date</label>
+                <label class="col-sm-2 col-form-label col-form-label-sm">Initial date</label>
                 <div class="col-sm-10">
                     <input type="date" class="form-control form-control-sm" v-model="posts.date_start" :state="checkDate" name="begin" placeholder="dd-mm-yyyy"  min="1997-01-01" :max="today">
                 </div>
             </div>
             <div class="form-group row">
-                <label for="colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Final date</label>
+                <label class="col-sm-2 col-form-label col-form-label-sm">Final date</label>
                 <div class="col-sm-10">
                     <input type="date" class="form-control form-control-sm" v-model="posts.date_end" :state="checkDate" name="end" placeholder="dd-mm-yyyy"  min="1997-01-01" :max="today">
                     <small  class="alert alert-danger" role="alert" v-if="checkDate">The initial date has to be smaller than the final date</small>
@@ -59,9 +59,9 @@
         <DataFrameTable :hist=history></DataFrameTable>
 
         <div v-if="checkData">
-            <EDA :tickerData=true></EDA>
-            <PCA></PCA>
-            <PronosticModels></PronosticModels>
+            <EDA :tickerData="true" :hist=history></EDA>
+            <PCA :tickerData="true"></PCA>
+            <PronosticModels :tickerData="true"></PronosticModels>
             <HybridModel></HybridModel> 
         </div>
 
@@ -77,6 +77,7 @@ import EDA from './EDA.vue'
 import PCA from './PCA.vue'
 import PronosticModels from './Models.vue'
 import HybridModel from './HybridModel.vue'
+
 // import {Series} from 'danfojs/dist/core/series';
 
 export default {
@@ -86,7 +87,7 @@ export default {
         EDA,
         PCA,
         PronosticModels,
-        HybridModel
+        HybridModel,
     },
     props: ['value'],
     data(){
@@ -124,9 +125,9 @@ export default {
             this.history = null;
         },
         
-        emitResult(){
-            this.$emit('output', this.res)
-        }
+        // emitResult(){
+        //     this.$emit('output', this.res)
+        // },
     },
     computed:{
         checkData(){
@@ -136,7 +137,9 @@ export default {
             return this.posts.date_start >= this.posts.date_end
         },
         today(){ return new Date().toJSON().slice(0, 10)},
-
+        getHist(){
+            return this.history
+        }
     }
 }
 

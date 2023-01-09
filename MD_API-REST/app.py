@@ -54,7 +54,7 @@ def PCA():
     if theresData and theresEDA:
         pca = PCA_algorithm(data,eda)
         return jsonify({
-            "PCA":pca.runProcess()
+            "pca":pca.runProcess()
         })
         
     return jsonify({
@@ -88,7 +88,9 @@ def Dtree():
             })
         else:
             if dTreeresponse["status"]:
+                print(request.json)
                 req = request.json
+                print(type(req))
                 dfreq = pd.DataFrame.from_dict(req)
                 newPronostic = dTree.newPronostic(dfreq)
                 return jsonify({
@@ -151,6 +153,7 @@ def svm(kernel):
         if request.method == "GET":
             global svm
             svm = SVM_Model(data,eda,kernel)
+            print(kernel)
             global svmResponse
             svmResponse = svm.buildModel()
             return jsonify({
