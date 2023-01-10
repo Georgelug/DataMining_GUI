@@ -505,10 +505,14 @@ class Hybrid_kmeansRandomForest():
             date = datetime.now()
             return {
                     "message":"The classification has been created succesfully",
-                    "clusters":self.Mdata.groupby(['cluster'])['cluster'].count().to_dict(),
+                    "clusters":self.Mdata.groupby(['cluster'])['cluster'].count().to_list(),
                     "dfCluster": self.Mdata.to_json(orient = 'records'),
                     "status": True,
                     "time_stamp": date.strftime("%m/%d/%Y, %H:%M:%S"),
+                    "toPlot":{
+                        "yTest": self.randomForest.Y_test.flatten().tolist(),
+                        "yPronostic": self.randomForest.Y_Pronostic.tolist(),
+                    },
                     "input":{
                         "Close" : stockMarketSharePrice["Close"].to_list(), 
                         "Volume" : stockMarketSharePrice["Volume"].to_list(), 
@@ -536,13 +540,22 @@ class SVM_Model(Model):
         super().__init__(data, eda)
         self.kernel : str = kernel
         self.isSVM = True
+    
+    # def transform(self,data,lab):
+    #     t = lambda e : lab.fit_transform(e)
+    #     return t(data)
+    
     def trainModel(self):
         self.model = SVC(kernel = self.kernel)
+        print(self.model)
         print(type(self.X_train), type(self.Y_train))
-        print(self.X_train.flatten(), self.Y_train.flatten())
-        # lab = preprocessing.LabelEncoder()
-        # y_transformed = lab.fit_transform(self.Y_train)
-        self.model.fit(self.X_train, self.Y_train.flatten()) # fix this error
+        print(self.X_train, self.Y_train)
+        lab = preprocessing.LabelEncoder()
+        y_transformed = lab.fit_transform(self.Y_train)
+        # X_transformed = lab.fit_transform(self.X_train)
+        X_transformed = list(map(lambda x : lab.fit_transform(x),self.X_train))
+        print(X_transformed)
+        self.model.fit(X_transformed, y_transformed) # fix this error
         print(self.model)
         self.Y_Pronostic = self.model.predict(self.X_test)
 
@@ -553,16 +566,16 @@ if __name__ == "__main__":
                         "date_start" : "2019-1-1",
                         "date_end" : "2022-1-1"
                     }
-    newPron = pd.DataFrame.from_dict({   
-                                        "Close": [108.2],
-                                        "Volume": [112.2], 
-                                        "Dividends": [100.8]
-                                    })
     # newPron = pd.DataFrame.from_dict({   
-    #                                     "Open": [108.2],
-    #                                     "High": [112.2], 
-    #                                     "Low": [100.8]
+    #                                     "Close": [108.2],
+    #                                     "Volume": [112.2], 
+    #                                     "Dividends": [100.8]
     #                                 })
+    newPron = pd.DataFrame.from_dict({   
+                                        "Open": [108.2],
+                                        "High": [112.2], 
+                                        "Low": [100.8]
+                                    })
     data = Data(
         ticker = dataInfoTicker["ticker"],
         name = dataInfoTicker["name"],
@@ -570,11 +583,11 @@ if __name__ == "__main__":
         date_end = dataInfoTicker["date_end"]
     )
     eda = EDA_algorithm(data)
-    rd = Hybrid_kmeansRandomForest(data)
-    # print(rd.buildModel())
+    rd = SVM_Model(data,eda,"linear")
+    print(rd.buildModel())
     # print(rd.newPronostic(newPron))
-    info = rd.newClassification(newPron)
-    # print(info)
-    df = pd.read_json(info["dfCluster"])
-    print(df.describe())
+    info = rd.newPronostic(newPron)
+    print(info)
+    # df = pd.read_json(info["close"])
+    # print(df.describe())
     # rd.plotModel()

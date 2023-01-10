@@ -76,7 +76,7 @@ import DataFrameTable from './Data.vue'
 import EDA from './EDA.vue'
 import PCA from './PCA.vue'
 import PronosticModels from './Models.vue'
-import HybridModel from './HybridModel.vue'
+import HybridModel from './PronosticModels/HybridModel.vue'
 
 // import {Series} from 'danfojs/dist/core/series';
 

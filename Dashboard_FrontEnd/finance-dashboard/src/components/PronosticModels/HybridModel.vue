@@ -2,25 +2,9 @@
     <div>
         <div class="card text-center">
             <div class="card-header">
-                <h4>SVM</h4>
+                <h4>Hybrid model (Kmeans + Random Forest classifier)</h4>
                 <div class="col">
-                    <!-- Poner esto en un form y que el kernel sea un filtro con las opciones (linear, poly, rbf o sigmoid) -->
-                    <form class="form-group" @submit="getData">
-                        <div class="form-group row">
-                            <label>Kernel</label>
-                            <div class="col-sm-10">
-                                <select class="form-control" v-model="posts.kernel" :state="true">
-                                    <option value="linear"> linear</option>
-                                    <option value="poly">   Polynomial</option>
-                                    <option value="rbf">    Radial</option>
-                                    <option value="sigmoid">Sigmoid</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <input  type="submit" class="btn btn-primary mb-2" value="Compute">
-                        </div>
-                    </form>
+                    <button @click='getData' class="btn btn-primary mb-2"> Compute</button>
                 </div>
             </div>
             <div class="card-body" v-if="checkData">
@@ -31,24 +15,13 @@
                             <div class="card-body">
                                 <ul>
                                     <li>
-                                        <label>Kernel</label>
-                                        <p>{{ posts.kernel }}</p>
-                                    </li>
-                                    <li>
-                                        <label>MAE</label>
-                                        <p>{{ info?.mae }}</p>
-                                    </li>
-                                    <li>
-                                        <label>MSE</label>
-                                        <p>{{ info?.mse }}</p>
-                                    </li>
-                                    <li>
-                                        <label>RMSE</label>
-                                        <p>{{ info?.rmse }}</p>
-                                    </li>
-                                    <li>
-                                        <label>Score</label>
-                                        <p>{{ info?.score }}</p>
+                                        <label> Clusters </label>
+                                        <ul>
+                                            <li v-for="element in arrCluster" v-bind:key="element">
+                                                {{ element }}
+                                            </li>
+                                        </ul>
+                                        <p>{{ info?.criteria }}</p>
                                     </li>
                                 </ul>
                             </div>
@@ -64,25 +37,25 @@
                     </li>
                     <li class="list-group-item">
                         <div class="card text-white bg-secondary mb-3" style="max-width: 18rem;">
-                            <div class="card-header">Pronostic</div>
+                            <div class="card-header">Classification</div>
                             <div class="card-body">
                                 <form class="form-group" @submit="getPronostic"  method="post" action="">
                                     <div class="form-group row">
-                                        <label>Open</label>
+                                        <label>Close</label>
                                         <div class="col-sm-10">
-                                            <input type="number" class="form-control form-control-sm" v-model="posts.Open" :state="true" placeholder="Open value">
+                                            <input type="number" class="form-control form-control-sm" v-model="posts.Close" :state="true" placeholder="Open value">
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label>High</label>
+                                        <label>Volume</label>
                                         <div class="col-sm-10">
-                                            <input type="number" class="form-control form-control-sm" v-model="posts.High" :state="true" placeholder="High value">
+                                            <input type="number" class="form-control form-control-sm" v-model="posts.Volume" :state="true" placeholder="High value">
                                         </div>
                                     </div>
                                     <div class="form-group row">
-                                        <label>Low</label>
+                                        <label>Dividends</label>
                                         <div class="col-sm-10">
-                                            <input type="number" class="form-control form-control-sm" v-model="posts.Low" :state="true" placeholder="Low value">
+                                            <input type="number" class="form-control form-control-sm" v-model="posts.Dividends" :state="true" placeholder="Low value">
                                         </div>
                                     </div>
 
@@ -94,8 +67,8 @@
                                     </div>
                                     <div class="col-auto">
                                         <p v-if="checkPronostic">
-                                            <label>Close: </label>
-                                            {{ close }}
+                                            <label>Cluster: </label>
+                                            {{ Cluster }}
                                         </p>
                                     </div>
                                     
@@ -113,7 +86,7 @@
 import PlotModel from "./plotModel.vue"
 
 export default {
-    name: 'SVMModel',
+    name: 'HybridModel',
     components:{
         PlotModel
     },
@@ -122,25 +95,21 @@ export default {
             res : null,
             info : null,
             toplot : null,
-            close: null,
+            Cluster: null,
+            arrCluster: null,
             posts:{
-                Open: '',
-                High: '',
-                Low: '',
-                kernel:''
+                Close: '',
+                Volume: '',
+                Dividends: '',
             },
         }
     },
     methods:{
         getData(e){
             e.preventDefault();
-            this.axios.get(`http://127.0.0.1:3000/Model/SVM/${this.posts.kernel}`)
+            this.axios.get("http://127.0.0.1:3000/Model/hybrid")
             .then((result) => {
-                console.log(this.posts.kernel)
-                this.res =  result?.data?.SVM;
-                this.info = this.res?.model_info;
-                this.toplot = this.res?.toPlot;
-                console.log(typeof(this.res))
+                this.res =  result?.data?.hybridmodel;
                 console.log(this.res)
             })
             .catch(error =>{
@@ -150,15 +119,20 @@ export default {
         getPronostic(e){
             
             let aux = {
-                Open: [this.posts.Open],
-                High: [this.posts.High],
-                Low: [this.posts.Low],
+                Close: [this.posts.Close],
+                Volume: [this.posts.Volume],
+                Dividends: [this.posts.Dividends],
             }
             
-            this.axios.post(`http://127.0.0.1:3000/Model/SVM/${this.posts.kernel}`,aux)
+            this.axios.post("http://127.0.0.1:3000/Model/hybrid",aux)
             .then((result)=>{
-                this.close = result?.data?.SVM?.output?.close
-                console.log(this.close);
+                console.log(result.data)
+                this.Cluster = result?.data?.hybridModel?.output?.cluster
+                this.arrCluster = result?.data?.hybridModel?.clusters
+                this.toplot = result?.data?.hybridModel?.toPlot
+                console.log(this.Cluster);
+                console.log(typeof(this.arrCluster));
+                console.log(Array.from(this.arrCluster));
             }).catch(error => {
                 console.log(error);
             });
