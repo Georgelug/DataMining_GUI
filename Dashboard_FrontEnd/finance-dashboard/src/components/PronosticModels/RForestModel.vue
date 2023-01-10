@@ -43,7 +43,7 @@
                         </div>
                     </li>
                     <li class="list-group-item">
-                        <div class="card text-white bg-secondary mb-3" style="max-width: 18rem;">
+                        <div class="card text-black bg-light mb-3" style="max-width: 18rem;">
                             <div class="card-header">Plot</div>
                             <div class="card-body">
                                 <PlotModel :yTest="toplot?.yTest" :yPronostic="toplot?.yPronostic"></PlotModel>
