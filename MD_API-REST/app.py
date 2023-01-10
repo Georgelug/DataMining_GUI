@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request,send_file
 from flask_cors import CORS
 import pandas as pd
 
@@ -171,7 +171,28 @@ def svm(kernel):
         "message" : "Error, there is no data"
     })
 
-
+@app.route('/get_heatmap/<string:name>')
+def get_image(name):
+    try:
+        fileName = f"./images/{name}_heatmapCorrelations.png"
+        return send_file(fileName , attachment_filename=f'{name}_heatmap.png')
+    except Exception as e:
+        return jsonify({
+                    "message" : "Error, something is wrong",
+                    "Error": f"{e}"
+                })
+        
+@app.route('/get_histogram/<string:name>')
+def get_histogram(name):
+    try:
+        fileName = f"./images/{name}_histograms.png"
+        return send_file(fileName , attachment_filename=f'{name}_histograms.png')
+    except Exception as e:
+        return jsonify({
+                    "message" : "Error, something is wrong",
+                    "Error": f"{e}"
+                })
+        
 
 
 

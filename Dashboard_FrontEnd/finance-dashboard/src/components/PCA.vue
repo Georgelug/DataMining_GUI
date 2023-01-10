@@ -60,7 +60,7 @@
                     </li>
                     <li>
                         <h6>Heatmap</h6>
-                        <heatMapPlot :corr="step1"></heatMapPlot>
+                        <heatMapPlot :corr="step1" :company="'LIVEPOL1.MX'"></heatMapPlot>
                     </li>
                 </ul>
             </div>
@@ -205,7 +205,6 @@ export default {
     },
     components:{
         heatMapPlot
-        
     },
     data(){
         return {

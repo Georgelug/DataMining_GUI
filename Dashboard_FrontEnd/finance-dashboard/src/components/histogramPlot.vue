@@ -1,40 +1,58 @@
 <template>
-    <div>
-        {{ this.history }}
+    <div class="col">
+        <!-- <button @click='getImage' class="btn btn-secondary mb-2">get image</button> -->
+        <img :src="histogramlink" />
     </div>
+    {{ res }}
 </template>
 
 <script>
 
 export default {
     name: 'histogramPlot',
-    props:{
-        history: Object
-    },
     components:{
-        
+    },
+    props:{
+        corr: Object,
+        company: String,
     },
     data(){
-        return {
-            chartData:{
-                type: 'line',
-                series:[
-                    {
-                        values: this.history.map(e => e.Open)
-                    }
-                ]
-            }
+        return{
+
         }
     },
     methods:{
-        
+        getImage(e){
+            e.preventDefault();
+            this.axios.get(`http://127.0.0.1:3000/get_histogram/${this.company}`)
+            .then((result) => {
+                this.res =  result?.data
+                console.log(this.res)
+            })
+            .catch(error =>{
+                console.error(error);
+            })
+        }
     },
     computed:{
-        
+        histogramlink(){
+            return `http://127.0.0.1:3000/get_histogram/${this.company}`
+        }
     }
 }
 </script>
 
 <style>
-    
+    /* .graph{
+        margin: 0 auto;
+        background-color: center;
+    }
+    .tooltip{
+        background-color: center;
+        border: 1px solid black;
+        width: 100px;
+        opacity: 0;
+        color: black;
+        position: absolute;
+    } */
 </style>
