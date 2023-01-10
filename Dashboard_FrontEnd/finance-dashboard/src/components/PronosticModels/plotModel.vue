@@ -1,5 +1,6 @@
 <template>
     <Line :data="data" :options="options" />
+    
 </template>
 
 <script>
@@ -50,7 +51,7 @@ export default {
             },
             options : {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: true
             }
         }
     },
