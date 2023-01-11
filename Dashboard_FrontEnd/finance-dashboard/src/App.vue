@@ -1,8 +1,6 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-  <TickerFinance @output="checkTickerData($event)"></TickerFinance>
-  
+  <img  src="./assets/logo2.jpg"  class="img-fluid" alt="Responsive image">
+  <TickerFinance></TickerFinance>
 </template>
 
 <script>

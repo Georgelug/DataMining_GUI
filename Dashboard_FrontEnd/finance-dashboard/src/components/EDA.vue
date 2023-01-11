@@ -81,12 +81,8 @@
                             </div>
                         </li>
                         <li>
-                            <h6>Line plot</h6>
-                            <linePlot :history="hist"></linePlot>
-                        </li>
-                        <li>
                             <h6>Histogram plot</h6>
-                            <histogramPlot :history="hist"></histogramPlot>
+                            <histogramPlot :history="hist" :company="company"></histogramPlot>
                         </li>
                     </ul>
                 </div>
@@ -141,7 +137,7 @@
                         </li>
                         <li>
                             <h6>Heatmap</h6>
-                            <heatMapPlot :corr="step1" :company="'LIVEPOL1.MX'"></heatMapPlot>
+                            <heatMapPlot :corr="step1" :company=company></heatMapPlot>
                         </li>
                     </ul>
                 </div>
@@ -152,7 +148,7 @@
 </template>
 
 <script>
-import linePlot from './linePlot.vue'
+// import linePlot from './linePlot.vue'
 import histogramPlot from './histogramPlot.vue'
 import heatMapPlot from './heatMapPlot.vue'
 export default {
@@ -160,9 +156,10 @@ export default {
     props:{
         tickerData: Boolean,
         hist: Object,
+        company: String
     },
     components:{
-        linePlot,
+        // linePlot,
         histogramPlot,
         heatMapPlot
     },

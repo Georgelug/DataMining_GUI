@@ -1,9 +1,5 @@
 <template>
-    <div class="col">
-        <!-- <button @click='getImage' class="btn btn-secondary mb-2">get image</button> -->
-        <img :src="histogramlink" />
-    </div>
-    {{ res }}
+    <img :src="histogramlink" class="img-fluid" alt="Responsive image"/>
 </template>
 
 <script>
@@ -36,6 +32,7 @@ export default {
     },
     computed:{
         histogramlink(){
+            console.log(`http://127.0.0.1:3000/get_histogram/${this.company}`)
             return `http://127.0.0.1:3000/get_histogram/${this.company}`
         }
     }

@@ -292,7 +292,8 @@ class PCA_algorithm:
                         "covariance_matrix":self.covariance_matrix().tolist()
                     }
             step5 = {
-                        "n_PrincipalComponents":self.getNumberOfPrincipalComponents()
+                        "n_PrincipalComponents":self.getNumberOfPrincipalComponents(),
+                        "plotVariance": self.cumulativeVariance_components()
                     }
             step6 = {
                         "componentLoads":self.dropLessSignificantColumns().to_json(orient = 'records')

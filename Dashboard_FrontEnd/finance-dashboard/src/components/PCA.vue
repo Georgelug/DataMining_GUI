@@ -16,51 +16,51 @@
                 <h6 class="card-subtitle mb-2 text-muted">Evidence of possibly correlated variables</h6>
                 <ul>
                     <li>
-                            <h6>Correlations</h6>
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover table-sm">
-                                    <thead class="thead-dark">
-                                        <tr>
-                                            <th scope="col">Open</th>
-                                            <th scope="col">High</th>
-                                            <th scope="col">Low</th>
-                                            <th scope="col">Close</th>
-                                            <th scope="col">Volume</th>
-                                            <th scope="col">Dividens</th>
-                                            <th scope="col">Stock Splits</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr v-for="element in this.step1" v-bind:key="element">
-                                            <td>
-                                                {{ element.Open }}
-                                            </td>
-                                            <td>
-                                                {{ element.High }}
-                                            </td>
-                                            <td>
-                                                {{ element.Low }}
-                                            </td>
-                                            <td>
-                                                {{ element.Close }}
-                                            </td>
-                                            <td>
-                                                {{ element.Volume }}
-                                            </td>
-                                            <td>
-                                                {{ element.Dividends }}
-                                            </td>
-                                            <td>
-                                                {{ element["Stock Splits"] }}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                        <h6>Correlations</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover table-sm">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th scope="col">Open</th>
+                                        <th scope="col">High</th>
+                                        <th scope="col">Low</th>
+                                        <th scope="col">Close</th>
+                                        <th scope="col">Volume</th>
+                                        <th scope="col">Dividens</th>
+                                        <th scope="col">Stock Splits</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="element in this.step1" v-bind:key="element">
+                                        <td>
+                                            {{ element.Open }}
+                                        </td>
+                                        <td>
+                                            {{ element.High }}
+                                        </td>
+                                        <td>
+                                            {{ element.Low }}
+                                        </td>
+                                        <td>
+                                            {{ element.Close }}
+                                        </td>
+                                        <td>
+                                            {{ element.Volume }}
+                                        </td>
+                                        <td>
+                                            {{ element.Dividends }}
+                                        </td>
+                                        <td>
+                                            {{ element["Stock Splits"] }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </li>
                     <li>
                         <h6>Heatmap</h6>
-                        <heatMapPlot :corr="step1" :company="'LIVEPOL1.MX'"></heatMapPlot>
+                        <heatMapPlot :corr="step1" :company=company></heatMapPlot>
                     </li>
                 </ul>
             </div>
@@ -71,9 +71,9 @@
                 <h6 class="card-subtitle mb-2 text-muted">Data standardization.</h6>
                 <ul>
                     <li>
-                        <h6>Standardized data</h6> 
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover table-sm">
+                        <h6>Standardized data</h6>
+                        <div class="table-wrapper-scroll-y my-custom-scrollbar">
+                            <table class=" table table-responsive table-striped table-hover table-sm">
                                 <thead class="thead-dark">
                                     <tr>
                                         <th scope="col">Open</th>
@@ -157,6 +157,10 @@
                     <li>
                         <h6>Number of principal components: {{ step5 }}</h6> 
                     </li>
+                    <li>
+                        <h6>Comulative variance plot</h6>
+                        <variancePlot :company=company></variancePlot>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -196,15 +200,18 @@
 
 <script>
 import heatMapPlot from './heatMapPlot.vue'
+import variancePlot from './plotVariance.vue'
 export default {
     name: 'PCA',
     props:{
         tickerData: Boolean,
         hist: Object,
-        corrs : Object
+        corrs : Object,
+        company: String
     },
     components:{
-        heatMapPlot
+        heatMapPlot,
+        variancePlot,
     },
     data(){
         return {
@@ -251,5 +258,12 @@ export default {
 </script>
 
 <style>
-    
+    .my-custom-scrollbar {
+        position: relative;
+        height: 200px;
+        overflow: auto;
+    }
+    .table-wrapper-scroll-y {
+        display: block;
+    }
 </style>

@@ -1,10 +1,5 @@
 <template>
-    <h6>Heatmap here</h6>
-    <div class="col">
-        <!-- <button @click='getImage' class="btn btn-secondary mb-2">get image</button> -->
-        <img :src="heatmaplink" />
-    </div>
-    {{ res }}
+    <img :src="heatmaplink" class="img-fluid" alt="Responsive image"/>
 </template>
 
 <script>

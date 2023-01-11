@@ -1,28 +1,25 @@
 <template>
     <!-- <div v-html="plot"></div> -->
-    <div class="mt-5" v-if="checkData">
-        <div class="col-lg8 offset-lg-3">
-            <div class="table-responsive">
-                <DataTable :data="hist" :columns="columns" :options="{responsive:true, autoWidth:false, dom:'Bfrtip', buttons:btns}" class="table table-striped table-bordered display">
-                    <thead>
-                        <tr>
-                            <th>index</th>
-                            <th>Open</th>
-                            <th>High</th>
-                            <th>Low</th>
-                            <th>Close</th>
-                            <th>Volume</th>
-                            <th>Dividends</th>
-                            <th>Stock splits</th>
-                        </tr>
-                    </thead>
-                </DataTable>
-            </div>
-        </div>
+    <div class="table-responsive"  v-if="checkData">
+        <DataTable :data="hist" :columns="columns" :options="{responsive:true, autoWidth:false, dom:'Bfrtip', buttons:btns}" class="table table-striped table-bordered display">
+            <thead>
+                <tr>
+                    <th>index</th>
+                    <th>Open</th>
+                    <th>High</th>
+                    <th>Low</th>
+                    <th>Close</th>
+                    <th>Volume</th>
+                    <th>Dividends</th>
+                    <th>Stock splits</th>
+                </tr>
+            </thead>
+        </DataTable>
     </div>
 </template>
 
 <script>
+    
     import {DataFrame} from "danfojs";
     import DataTable from "datatables.net-vue3";
     import DataTablelib from "datatables.net-bs5";
@@ -42,10 +39,11 @@
         name: 'DataFrameTable',
         props: {
             df: DataFrame,
-            hist: null
+            hist: null,
+            company: String
         },
         components:{
-            DataTable
+            DataTable,
         },
         data(){
             return {

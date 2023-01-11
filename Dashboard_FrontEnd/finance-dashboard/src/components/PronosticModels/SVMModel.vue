@@ -58,7 +58,7 @@
                         <div class="card text-black bg-light mb-3" style="max-width: 18rem;">
                             <div class="card-header">Plot</div>
                             <div class="card-body">
-                                <PlotModel :yTest="toplot?.yTest" :yPronostic="toplot?.yPronostic"></PlotModel>
+                                <PlotModel :yTest="toplot?.yTest" :yPronostic="toplot?.yPronostic" :company="company"></PlotModel>
                             </div>
                         </div>
                     </li>
@@ -114,6 +114,9 @@ import PlotModel from "./plotModel.vue"
 
 export default {
     name: 'SVMModel',
+    props:{
+        company: String
+    },
     components:{
         PlotModel
     },

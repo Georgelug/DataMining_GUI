@@ -36,6 +36,7 @@ export default {
     props:{
         yTest : Array, 
         yPronostic : Array, 
+        company: String
     },
     data(){
         return{
@@ -43,7 +44,7 @@ export default {
                 labels: this.yTest,
                 datasets: [
                 {
-                    label: 'Data One',
+                    label: this.company,
                     backgroundColor: '#f87979',
                     data: this.yPronostic
                 }

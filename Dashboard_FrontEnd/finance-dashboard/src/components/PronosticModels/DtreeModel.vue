@@ -46,7 +46,7 @@
                         <div class="card">
                             <div class="card-header">Plot</div>
                             <div class="card-body">
-                                <PlotModel :yTest="toplot?.yTest" :yPronostic="toplot?.yPronostic"></PlotModel>
+                                <PlotModel :yTest="toplot?.yTest" :yPronostic="toplot?.yPronostic" :company="company"></PlotModel>
                             </div>
                         </div>
                     </li>
@@ -102,6 +102,9 @@ import PlotModel from "./plotModel.vue"
 
 export default {
     name: 'DtreeModel',
+    props:{
+        company: String
+    },
     components:{
         PlotModel
     },

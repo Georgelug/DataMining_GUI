@@ -1,15 +1,15 @@
 <template>
-    <div>
+    <div v-if="tickerData">
         <h1>Models</h1>
         <ul class="list-group list-group-flush">
             <li class="list-group-item">
-                <DtreeModel></DtreeModel>
+                <DtreeModel :company=company></DtreeModel>
             </li>
             <li class="list-group-item">
-                <RandomForestModel></RandomForestModel>
+                <RandomForestModel :company=company></RandomForestModel>
             </li>
             <li class="list-group-item">
-                <SVMModel></SVMModel>
+                <SVMModel :company=company></SVMModel>
             </li>
         </ul>
     </div>
@@ -28,6 +28,7 @@ export default {
     },
     props:{
         tickerData: Boolean,
+        company: String
     },
     data(){
         return {
